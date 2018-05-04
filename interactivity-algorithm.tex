@@ -1,0 +1,180 @@
+
+
+
+\begin{algorithm}[t!]
+    \SetKwProg{Function}{function}{}{}
+    \SetKwFunction{changepropagation}{change-propagation}
+    \SetKwFunction{IVMPath}{IVMPath}
+    \SetKwFunction{prefixDiffs}{prefixDiffs}
+    \SetKwFunction{navigate}{navigate}
+    \SetKwFunction{keysWithin}{keysWithin}
+    \SetKwFunction{instantiateTemplate}{instantiateTemplate}
+    \SetKwFunction{instantiateVmPayload}{instantiateVmPayload}
+    \SetKwFunction{instantiateForLoopVmPayload}{instantiateForLoopVmPayload}
+    \Function{\changepropagation{Notebook $N$, Environment $env$, Set of Input Diffs $D$}}{
+    	\For {\textbf{each} statement s in each coding snippet of N}{
+	    		 \uIf  {s is $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ } {
+	    		  \uIf  {There is $\Delta^{}(t) \in D$ with $t$ that targets any subexpression of E} {
+	    		    Reevaluate $E$ and assign result $r$ to $x$\;
+	    		    Update $env$ with new value of $x$\;
+	    		    Construct $\Delta^{}(x)$ and add it to D\;
+	    		 }
+    		 }
+			 \uElseIf  {s is $\gl{<\%unit } U \gl{\%> } B \gl{ <\%end unit\%>}$ } {
+			 	\uIf  {There is $\Delta^{}(t) \in D$ with $t$ that that targets any subexpression of B} {
+			  		Reevaluate $B$ and invoke unit U with result $r$ \;
+			 	}
+             }    
+        }
+        
+    }
+\caption{Change Propagation Algorithm}
+\label{algo:change-propagation-algorithm2}
+\end{algorithm}
+
+\begin{algorithm}[t!]
+    \SetKwProg{Function}{function}{}{}
+    \SetKwFunction{changepropagation}{change-propagation}
+    \SetKwFunction{IVMPath}{IVMPath}
+    \SetKwFunction{prefixDiffs}{prefixDiffs}
+    \SetKwFunction{navigate}{navigate}
+    \SetKwFunction{keysWithin}{keysWithin}
+    \SetKwFunction{instantiateTemplate}{instantiateTemplate}
+    \SetKwFunction{instantiateVmPayload}{instantiateVmPayload}
+    \SetKwFunction{instantiateForLoopVmPayload}{instantiateForLoopVmPayload}
+    \Function{\changepropagation{Notebook $N$, Environment $env$, Set of Input Diffs $D$}}{
+    	\For {\textbf{each} statement s in each coding snippet of N}{
+	    		 \uIf  {s is $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ and E contains \\directive: \gl{<\%}\text{\textbf{for} $v$ \textbf{in} $E''$}\gl{\%>} B \gl{<\%}\text{\textbf{end for}}\gl{\%>} \\or directive: $\gl{<\% }\text{\textbf{print} $E'$}\gl{ \%>}$ } {
+	    		  \uIf  {There is $\Delta^{}(t; p) \in D$ with $t$ that matches $E'$ or $E''$} {
+	    		    Reevaluate $E$ and assign result $r$ to $x$\;
+	    		    Update $env$ with new value of $x$\;
+	    		    Construct $\Delta^{}(x; r)$ and add it to D\;
+	    		 }
+    		 }
+    		  \uElseIf  {s is $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ and E contains \\directive: \gl{<\%}\text{\textbf{for} $v$ \textbf{in} $E'$}\gl{\%>} B \gl{<\%}\text{\textbf{end for}}\gl{\%>} with B containing nested directives \gl{<\%}\text{\textbf{for} $v$ \textbf{in} $E''$}\gl{\%>} or $\gl{<\%}\text{\textbf{print} $E'''$}\gl{\%>}$  } {
+    		 	    		  \uIf  {There is $\Delta^{}(t; p) \in D$ with $t$ that matches $E''$ or $E'''$} {
+    		 	    		    Reevaluate $E$ and assign result $r$ to $x$\;
+    		 	    		    Update $env$ with new value of $x$\;
+    		 	    		    Construct $\Delta^{}(x; r)$ and add it to D\;
+    		 	    		 }
+    		 	    		 }
+			 \uElseIf  {s is $\gl{<\%unit } U \gl{\%> } B \gl{ <\%end unit\%>}$ and B contains directives \gl{<\%}\text{\textbf{for} $v$ \textbf{in} $E''$}\gl{\%>} or $\gl{<\%}\text{\textbf{print} $E'$}\gl{\%>}$ } {
+			 	\uIf  {There is $\Delta^{}(t; p) \in D$ with $t$ that matches $E'$ or $E''$} {
+			  		Reevaluate $E$ and invoke unit U with result $r$ \;
+			 	}
+             }    
+        }
+        
+        
+        
+        \Return{$D_{out}$}\;
+    }
+\caption{Change Propagation Algorithm}
+\label{algo:change-propagation-algorithm}
+\end{algorithm}
+
+\eat{
+\begin{algorithm}[t!]
+    \SetKwProg{Function}{function}{}{}
+    \SetKwFunction{MVVMIVM}{MVVMIVM}
+    \SetKwFunction{IVMPath}{IVMPath}
+    \SetKwFunction{prefixDiffs}{prefixDiffs}
+    \SetKwFunction{navigate}{navigate}
+    \SetKwFunction{keysWithin}{keysWithin}
+    \SetKwFunction{instantiateTemplate}{instantiateTemplate}
+    \SetKwFunction{instantiateVmPayload}{instantiateVmPayload}
+    \SetKwFunction{instantiateForLoopVmPayload}{instantiateForLoopVmPayload}
+    \Function{\MVVMIVM{Template $T$, Model $M$, Set of Input Diffs $D_{in}$}}{
+    	Set of output diffs $D_{out} \leftarrow$ empty bag\;
+    	\For {top-level directive $d \in T$}{
+    		 d.path $\leftarrow$ path to d in template T \\
+             \uIf  {d is $\gl{<\% }\text{print Path $\pp{e}$}\gl{ \%>}$} {
+   				  $\Delta \leftarrow \IVMPath(\pp{e}, M, D_{in})$\;
+				  $D_{out} = D_{out} \cup \{\prefixDiffs(d.path, \{\Delta\})\}$
+             }
+			 \uElseIf  {d is $\gl{<\% }\text{for Var y in  Path $\pp{e}$}\gl{ \%>} B \gl{<\% }\text{end for}\gl{\%>}$} {
+   				  $\Delta^{type}_{}(\pp{t}; p) \leftarrow \IVMPath(\pp{e}, M, D_{in})$\;   			
+   				\uIf{$\pp{t} = empty$} {	  
+					\uIf {$type = update$} {
+						Let $T'$ be the template rooted at $d$, where $\pp{e}$ is replaced by $p$\;
+						$p' \leftarrow \instantiateTemplate(T', M)$\;
+						$D_{out} = D_{out} \cup \{\Delta^{update}(d.path; p')\}$\;
+					}
+				}
+				\uElseIf {$\pp{t} = [k] \text{ and } type = insert \text{ } array$} {
+					$M' \leftarrow M \# \{y \leftarrow p\}$\;
+					$p' \leftarrow \instantiateTemplate(B, M')$\;
+					$D_{out} = D_{out} \cup \{\Delta^{insert}_{array}(d.path[k]; p')\}$\;					
+				}
+				\uElseIf {$\pp{t} = [k]\pp{s}$} {
+					$D'_{in} \leftarrow D_{in} \cup \{\Delta^{type}(y\ \pp{s}; p)\}$\;
+					$D_{nested}$ = \MVVMIVM($B$, $M$, $D'_{in}$)\;
+					remove first path step of each diff in $D_{nested}$\;
+					$D_{out} \leftarrow D_{out} \cup \prefixDiffs(d.path[k], D_{nested})$\;
+				}
+%				\uElseIf {$\Delta^{type}_{}(\pp{t}; p)$ is null }
+%				{
+					$D_{nested}$ = \MVVMIVM($B$, $M$, $D_{in}$)\;
+					\uIf  {$D_{nested}$ not an empty bag} {
+						$l \leftarrow$ length of array e targeted by Path $\pp{e}$\\
+						\For { i in [0 ... l]}{
+							$D_{out} \leftarrow D_{out} \cup \prefixDiffs(d.path[i], D_{nested})$\;
+						}
+%					}
+					
+				}
+\BlankLine			
+%				$D_{inner}$ = \MVVMIVM($B$, $M$, $D'_{in}$)\;
+%				$D_{out} \leftarrow D_{out} \cup \prefixDiffs(d.path[*], D_{inner})$\;
+             }    
+        }
+        
+        
+        
+        \Return{$D_{out}$}\;
+    }
+\caption{MVVM-IVM}
+\label{algo:templateIVM}
+\end{algorithm}
+
+\begin{algorithm}[t!]
+    \SetKwProg{Function}{function}{}{}
+    \SetKwFunction{IVMPath}{IVMPath}
+    \SetKwFunction{prefixDiffs}{prefixDiffs}
+    \SetKwFunction{navigate}{navigate}
+    \SetKwFunction{keysWithin}{keysWithin}
+    \SetKwFunction{instantiateVmPayload}{instantiateVmPayload}
+    \SetKwFunction{instantiateForLoopVmPayload}{instantiateForLoopVmPayload}
+    \Function{\IVMPath{Path Expression $\pp{e}$, Model $M$, Set of Input Diffs $D_{in}$}}{
+%    	Set of output diffs $D_{out} \leftarrow$ empty bag\;
+   			\For {\textbf{each} $\Delta^{type}(\pp{t}; p) \in D_{in}$} {
+   				  		\uIf {$\pp{t}$ is $\pp{e}\pp{s}$} {
+% 								$D_{out} \leftarrow D_{out} \cup \{\Delta^{type}(\pp{s}; p)\}$
+								\Return{$\Delta^{type}(\pp{s}; p)$}   				  		
+   				  		}
+   				  		\uElseIf {$\pp{e}$ is $\pp{t}\pp{s}$} { 
+   				  			\uIf{$type = update$} {
+   				  				$p' \leftarrow \navigate(p, \pp{s})$
+\;
+%								$D_{out} \leftarrow D_{out} \cup \{\Delta^{type}(empty; p')\}$ 
+								\Return{$\Delta^{update}(empty; p')$}
+							}
+							\uIf{$type = delete$} {
+															\Return{$\Delta^{delete}(empty)$}
+														}
+							\uElse {
+   				  				$p' \leftarrow \navigate(M, \pp{e})$
+\;
+%								$D_{out} \leftarrow D_{out} \cup \{\Delta^{update}(empty; p')\}$ 							
+								\Return{$\Delta^{update}(empty; p')$} 												
+							}
+   				  		}
+				  }
+%        \Return{$D_{out}$}\;
+        \Return{$null$}\;
+    }
+\caption{IVMPath}
+\label{algo:IVMExpression}
+\end{algorithm}
+
+}

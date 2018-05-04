@@ -1,0 +1,194 @@
+\documentclass[sigconf]{acmart}
+\setlength{\paperheight}{11in}
+\setlength{\paperwidth}{8.5in}
+
+\usepackage{fancyvrb}																				
+\usepackage{hhline}
+\usepackage{booktabs} % For formal tables
+\usepackage{commentary-arxiv-private}
+\usepackage{tabularx}
+%\usepackage{sectsty}
+\usepackage{titlecaps}
+\usepackage{caption,subcaption}		
+
+\usepackage{balance} % For balanced columns on the last page
+\usepackage{booktabs} % For formal tables
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\DefineVerbatimEnvironment{code}{Verbatim}{commandchars=\\\{\},frame=single,numbers=left,fontsize=\scriptsize}
+\usepackage{paralist, tabularx}
+
+\usepackage{epstopdf}
+\usepackage{color}
+\usepackage{url}
+\usepackage{enumerate}
+\usepackage[labelfont=bf]{caption}
+\usepackage{xcolor}
+
+% Template directives
+\newcommand{\directive}[2]{%
+	\ifx&#2&%
+	\textbf{<\% #1 \%>}%
+	\else%
+	\textbf{<\% #1}{ #2 }\textbf{\%>}%
+	\fi%
+}
+
+
+% Define our own compact enumerate
+\newenvironment{compact_enum}
+{\setlength{\leftmargini}{1em}
+	\begin{enumerate}
+		\setlength{\labelsep}{.3em}
+		\setlength{\itemsep}{.4em}
+		\setlength{\parskip}{0pt}
+		\setlength{\parsep}{0pt}}
+	{\end{enumerate}}
+
+% Define our own compact itemize
+\newenvironment{compact_item}
+{\setlength{\leftmargini}{1em}
+	\begin{itemize}
+		\setlength{\labelsep}{.3em}
+		\setlength{\itemsep}{.4em}
+		\setlength{\parskip}{0pt}
+		\setlength{\parsep}{0pt}}
+	{\end{itemize}}
+
+\newcommand{\gn}[1]  {\textit{#1}}              % (N)on-terminal
+\newcommand{\gt}[1]  {\textbf{#1}}              % (T)erminal
+\newcommand{\gl}[1]  {\texttt{\textbf{#1}}}     % (L)iteral
+\newcommand{\gs}[1]  {\textit{#1}}              % (S)pecial construct
+\newcommand{\gp}[0]  {$\rightarrow$}            % (P)roduction rule
+\newcommand{\gd}[0]  { $|$ }                    % (D)isjunction
+
+
+% Paths
+\newcommand{\pp}[1]{\ensuremath{\hat{#1}}}
+\newcommand{\contains}{\ensuremath{\supseteq}}
+
+% Diffs
+\newcommand{\diff}[3]{\ensuremath{\Delta^{#1}_{#2}(#3)}}
+\newcommand{\insertarray}[1]{\diff{\operatorname{insert}}{\operatorname{array}}{#1}}
+\newcommand{\insertbag}[1]{\diff{\operatorname{insert}}{\operatorname{bag}}{#1}}
+\newcommand{\inserttuple}[1]{\diff{\operatorname{insert}}{\operatorname{tuple}}{#1}}
+\newcommand{\append}[1]{\diff{\operatorname{append}}{\operatorname{array}}{#1}}
+\newcommand{\update}[1]{\diff{\operatorname{update}}{}{#1}}
+\newcommand{\delete}[1]{\diff{\operatorname{delete}}{}{#1}}
+%\newcommand{\construct}[1]{\diff{\operatorname{construct}}{}{#1}}
+%\newcommand{\destruct}[1]{\diff{\operatorname{destruct}}{}{#1}}
+\newcommand{\construct}[1]{\diff{\operatorname{construct}}{\operatorname{unit}}{#1}}
+\newcommand{\constructattach}[1]{\diff{\operatorname{construct\&attach}}{\operatorname{unit}}{#1}}
+\newcommand{\destruct}[1]{\diff{\operatorname{destruct}}{\operatorname{unit}}{#1}}
+\newcommand{\attach}[1]{\diff{\operatorname{attach}}{\operatorname{unit}}{#1}}
+\newcommand{\detach}[1]{\diff{\operatorname{detach}}{\operatorname{unit}}{#1}}
+\newcommand{\hpath}[1]{\ensuremath{\vec{#1}}}
+\newcommand{\inserthtml}[1]{\diff{\operatorname{insert}}{\operatorname{html}}{#1}}
+\newcommand{\appendhtml}[1]{\diff{\operatorname{append}}{\operatorname{html}}{#1}}
+\newcommand{\updatehtml}[1]{\diff{\operatorname{update}}{\operatorname{html}}{#1}}
+\newcommand{\deletehtml}[1]{\diff{\operatorname{delete}}{\operatorname{html}}{#1}}
+
+\newcommand{\id}[1]{\hat{#1}}
+\newcommand{\inst}[1]{I(#1)}
+\newcommand{\diffz}[2]{\triangle^{\operatorname{#1}}(#2)}
+\newcommand{\insertdiff}[1]{\diffz{insert}{#1}}
+\newcommand{\inserttuplediff}[1]{\diffz{insert\_tuple}{#1}}
+\newcommand{\insertarraydiff}[1]{\diffz{insert\_array}{#1}}
+\newcommand{\appenddiff}[1]{\diffz{append}{#1}}
+\newcommand{\attributediff}[1]{\diffz{attribute}{#1}}
+\newcommand{\updatediff}[1]{\diffz{update}{#1}}
+\newcommand{\deletediff}[1]{\diffz{delete}{#1}}
+
+\newcommand{\highlight}[1]{\noindent\textbf{#1:}}
+
+\def\env{\mathrm{\Gamma}}
+\def\ground{\operatorname{Ground}}
+\def\nav{\operatorname{Nav}}
+\def\iterate{\operatorname{Iter}}
+\def\outputarray{\operatorname{Out}^A}
+\def\outputvalue{\operatorname{Out}^V}
+\def\function{\operatorname{Func}}
+\def\applyplan{\operatorname{Plan}}
+
+% Definition environment
+\newtheorem{base}{Base}[section]
+\newtheorem{definition}[base]{Definition}
+\newtheorem{example}[base]{Example}
+
+% Tabular
+\definecolor{lightgrey}{RGB}{235,235,235}
+\definecolor{cream}{RGB}{255,255,204}
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % "top" strut
+\newcommand\Bstrut{\rule[-0.9ex]{0pt}{0pt}} % "bottom" strut
+
+% Copyright
+%\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+
+% DOI
+\acmDOI{10.475/123_4}
+
+% ISBN
+\acmISBN{123-4567-24-567/08/06}
+
+%Conference, May 14, 2017, Chicago, IL, USA
+
+\acmConference[HILDA'18]{Workshop on Human-In-the-Loop Data Analytics}{June 2018}{Houston, TX, USA}
+\acmYear{2018}
+\copyrightyear{2018}
+
+\acmPrice{15.00}
+
+\newcommand{\projname}[0]{ViDeTTe}	
+	
+
+\begin{document}
+\title{\projname\ Interactive Notebooks}
+
+\author{Konstantinos Zarifis}
+\orcid{1234-5678-9012}
+\affiliation{%
+  \institution{University of California, San Diego}
+  %\streetaddress{P.O. Box 1212}
+  %\city{Dublin}
+  %\state{Ohio}
+  %\postcode{43017-6221}
+}
+\email{zarifis@cs.ucsd.edu}
+
+
+\input{abstract3}
+
+\keywords{Jupyter Notebooks, Reactive Visualizations, Data Exploration}
+
+
+
+\maketitle
+
+\input{introduction-AP3}
+\input{running-example}
+
+\input{traditional-notebooks3}
+\input{reactive-notebooks-ideal2}
+\input{vidette-notebooks3}
+\input{related-work}
+\input{conclusion}
+\balance
+\bibliographystyle{abbrv}
+%\bibliographystyle{ACM-Reference-Format}
+
+
+\bibliography{refs}
+
+
+\end{document}

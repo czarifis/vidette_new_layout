@@ -1,0 +1,33 @@
+%------------------------------------------------------------------------------- 
+% Version Text Flags
+%------------------------------------------------------------------------------- 
+
+% - conference  : Show conference text
+% - extended    : Show extended text
+% - draft       : Show draft text
+% - color       : Color highlight each version
+
+%------------------------------------------------------------------------------- 
+% Version Macros
+%------------------------------------------------------------------------------- 
+
+% \ifconference macro for conference text
+\newcommand{\ifconference}[1]{%
+\opt{color}{\color{teal}[\textbf{Conference: }}%
+\opt{conference}{#1}%
+\opt{color}{]\color{black}}%
+}
+
+% \ifextended macro for extended text
+\newcommand{\ifextended}[1]{%
+\opt{color}{\color{orange}[\textbf{Extended: }}%
+\opt{extended}{#1}
+\opt{color}{]\color{black}}%
+}
+
+% \ifdraft macro for draft text
+\newcommand{\ifdraft}[1]{%
+\opt{color}{\color{violet}[\textbf{Draft: }}%
+\opt{draft}{#1}
+\opt{color}{]\color{black}}%
+}

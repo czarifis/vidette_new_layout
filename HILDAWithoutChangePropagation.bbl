@@ -1,0 +1,145 @@
+\begin{thebibliography}{10}
+
+\bibitem{Altair}
+Altair: Declarative visualization in python.
+
+\bibitem{ipyvega}
+ipyvega: Ipython/jupyter notebook module for vega and vega-lite.
+
+\bibitem{ipywidgets}
+ipywidgets: Interactive widgets for the jupyter notebook.
+
+\bibitem{bhardwaj2015collaborative}
+A.~Bhardwaj, A.~Deshpande, A.~J. Elmore, D.~Karger, S.~Madden, A.~Parameswaran,
+  H.~Subramanyam, E.~Wu, and R.~Zhang.
+\newblock Collaborative data analytics with datahub.
+\newblock {\em Proceedings of the VLDB Endowment}, 8(12):1916--1919, 2015.
+
+\bibitem{Bokeh}
+{Bokeh Development Team}.
+\newblock {\em Bokeh: Python library for interactive visualization}, 2014.
+
+\bibitem{bostock2009protovis}
+M.~Bostock and J.~Heer.
+\newblock Protovis: A graphical toolkit for visualization.
+\newblock {\em IEEE transactions on visualization and computer graphics},
+  15(6):1121--1128, 2009.
+
+\bibitem{crotty2015vizdom}
+A.~Crotty, A.~Galakatos, E.~Zgraggen, C.~Binnig, and T.~Kraska.
+\newblock Vizdom: interactive analytics through pen and touch.
+\newblock {\em Proceedings of the VLDB Endowment}, 8(12):2024--2027, 2015.
+
+\bibitem{d3}
+D3: Data-driven documents.
+\newblock \url{https://d3js.org/}.
+
+\bibitem{derthick1997interactive}
+M.~Derthick, J.~Kolojejchick, and S.~F. Roth.
+\newblock An interactive visual query environment for exploring data.
+\newblock In {\em Proceedings of the 10th annual ACM symposium on User
+  interface software and technology}, pages 189--198. ACM, 1997.
+
+\bibitem{forward_online}
+Forward.
+\newblock \url{forward.ucsd.edu/visualizations.html}.
+
+\bibitem{SIGMOD2010}
+Y.~Fu, K.~Kowalczykowski, K.~W. Ong, Y.~Papakonstantinou, and K.~K. Zhao.
+\newblock Ajax-based report pages as incrementally rendered views.
+\newblock In {\em Proceedings of the 2010 ACM SIGMOD International Conference
+  on Management of data}, pages 567--578. ACM, 2010.
+
+\bibitem{CIDR2011}
+Y.~Fu, K.~W. Ong, Y.~Papakonstantinou, and M.~Petropoulos.
+\newblock The sql-based all-declarative forward web application development
+  framework.
+\newblock In {\em CIDR}, pages 69--78, 2011.
+
+\bibitem{ggvis}
+ggvis: Interactive grammar of graphics for r.
+\newblock \url{http://ggvis.rstudio.com/}.
+
+\bibitem{plotly}
+P.~T. Inc.
+\newblock Collaborative data science, 2015.
+
+\bibitem{Jupyter}
+{Jupyter}.
+\newblock \url{http://jupyter.org/}.
+
+\bibitem{Kamat:2016:TSI:2939502.2939514}
+N.~Kamat, E.~Wu, and A.~Nandi.
+\newblock Trendquery: A system for interactive exploration of trends.
+\newblock In {\em Proceedings of the Workshop on Human-In-the-Loop Data
+  Analytics}, HILDA '16, pages 12:1--12:4, New York, NY, USA, 2016. ACM.
+
+\bibitem{Krishnan:2016:AID:2994509.2994514}
+S.~Krishnan, J.~Wang, E.~Wu, M.~J. Franklin, and K.~Goldberg.
+\newblock Activeclean: Interactive data cleaning for statistical modeling.
+\newblock {\em Proc. VLDB Endow.}, 9(12):948--959, Aug. 2016.
+
+\bibitem{DBLP:conf/icde/LiarouI14}
+E.~Liarou and S.~Idreos.
+\newblock dbtouch in action database kernels for touch-based data exploration.
+\newblock In {\em {IEEE} 30th International Conference on Data Engineering,
+  Chicago, {ICDE} 2014, IL, USA, March 31 - April 4, 2014}, pages 1262--1265,
+  2014.
+
+\bibitem{livny1997devise}
+M.~Livny, R.~Ramakrishnan, K.~Beyer, G.~Chen, D.~Donjerkovic, S.~Lawande,
+  J.~Myllymaki, and K.~Wenger.
+\newblock Devise: integrated querying and visual exploration of large datasets.
+\newblock In {\em ACM SIGMOD Record}, volume~26, pages 301--312. ACM, 1997.
+
+\bibitem{satyanarayan2015vega}
+A.~Satyanarayan, D.~Moritz, K.~Wongsuphasawat, and J.~Heer.
+\newblock Vega-lite: A grammar of interactive graphics.
+\newblock {\em IEEE Trans. Visualization \& Comp. Graphics (Proc. InfoVis)},
+  2017, 2015.
+
+\bibitem{satyanarayan2016reactive}
+A.~Satyanarayan, R.~Russell, J.~Hoffswell, and J.~Heer.
+\newblock Reactive vega: A streaming dataflow architecture for declarative
+  interactive visualization.
+\newblock {\em IEEE transactions on visualization and computer graphics},
+  22(1):659--668, 2016.
+
+\bibitem{DBLP:journals/corr/SiddiquiKLKP16}
+T.~Siddiqui, A.~Kim, J.~Lee, K.~Karahalios, and A.~G. Parameswaran.
+\newblock zenvisage: Effortless visual data exploration.
+\newblock {\em CoRR}, abs/1604.03583, 2016.
+
+\bibitem{stolte2002polaris}
+C.~Stolte, D.~Tang, and P.~Hanrahan.
+\newblock Polaris: A system for query, analysis, and visualization of
+  multidimensional relational databases.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics},
+  8(1):52--65, 2002.
+
+\bibitem{vega}
+Vega, a visualization grammar.
+\newblock \url{http://trifacta.github.io/}.
+
+\bibitem{wickham2009ggplot2}
+H.~Wickham.
+\newblock {\em ggplot2: elegant graphics for data analysis}.
+\newblock Springer Science \& Business Media, 2009.
+
+\bibitem{Wilkinson:2005:GG:1088896}
+L.~Wilkinson.
+\newblock {\em The Grammar of Graphics (Statistics and Computing)}.
+\newblock Springer-Verlag New York, Inc., Secaucus, NJ, USA, 2005.
+
+\bibitem{Wu:2016:DAI:2939502.2939517}
+Y.~Wu, J.~M. Hellerstein, and E.~Wu.
+\newblock A devil-ish approach to inconsistency in interactive visualizations.
+\newblock In {\em Proceedings of the Workshop on Human-In-the-Loop Data
+  Analytics}, HILDA '16, pages 15:1--15:6, New York, NY, USA, 2016. ACM.
+
+\bibitem{zoumpatianos2015rinse}
+K.~Zoumpatianos, S.~Idreos, and T.~Palpanas.
+\newblock Rinse: interactive data series exploration with ads+.
+\newblock {\em Proceedings of the VLDB Endowment}, 8(12):1912--1915, 2015.
+
+\end{thebibliography}

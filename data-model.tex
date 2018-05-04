@@ -1,0 +1,105 @@
+\subsection{VDB Data Model}
+\label{section:data-model}
+
+%\yannisk{The term `data model' can be confusing, since the framework is using multiple `data models'. For instance, paths refer to template instances, which are not JSON++ values. To avoid confusion we will be using the term `VDB data model' to refer to the data model introduced in this section.}
+%\yannisk{We need (a) a description of the data model, (b) a sync up with the BNF (the description currently refers to non-existing lines), (c) a BNF for specifying the VDB and (d) a connection with the running example.} \yannisk{We need the following syntaxes: (a) a syntax for specifying the VDB (i.e., the connections to the database), which will be happening in some configuration file (\textbf{YP}: This is Appendix/extended version material. In the short paper it is sufficient to write ``similar to the data source configurations used by application servers". Indeed, if we separate connection aspects from logical aspects, the connection aspects can/should be fully identical to application servers. \textbf{KW:}), (b) a syntax to declare keys of bags. The latter will be used to declare keys of (i) base tables, (ii) results of SQL queries (\textbf{YP}: Why? Isn't it obvious from the duality of SQL/JSON in SQL++ ?) and (iii) arbitrary  functions written by the application developer.}
+
+%\costas{TBD. Will we mention the fact that we have JSON++ at all (IDs for each value)? Or we will just talk about JSON and mention that we use the path as ID? For the moment, I copied and pasted the definition of the Data Model from the "TOIT" paper}
+
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{value}                & \gp   & \gl{null}                                                     \\
+ 2  &                           & \gd   & \gl{\textquotedbl}\gn{string}\gl{\textquotedbl}               \\
+ 3  &                           & \gd   & \gn{number}                                                   \\
+ 4  &                           & \gd   & \gl{true}                                                     \\
+ 5  &                           & \gd   & \gl{false}                                                    \\
+ 6  &                           & \gd   & \gl{\{} (\gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                            \gl{:} \gn{value}                                           \\
+    &                           &       & ~~ (\gl{,} \gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                            \gl{:} \gn{value})* )? \gl{\}}                              \\
+ 7  &                           & \gd   & \gl{[} ( \gn{key}? \gn{value} 
+                                            (\gl{,} \gn{key}? \gn{value})* )? \gl{]}                    \\
+% 7  &                           & \gd   & \gl{[} ( \gn{key}? \gn{value} 
+%                                            (\gl{,} \gn{key}? \gn{value})* )? \gl{]}                    %\\
+ 8  &                           & \gd   & \gl{\{\{} ( \gn{key}? \gn{value} 
+                                            (\gl{,} \gn{key}? \gn{value})* )? \gl{\}\}}                  \\
+ 9  & \gn{key}                  & \gp   & \gl{\#(} \gn{string} \gl{)}                                   \\
+\hline
+\end{tabular}
+\caption{BNF grammar for JSON++ values}
+\label{figure:bnf-value}
+\end{figure}
+
+\newcommand{\jsonpplinevalue}[1]{%
+    \IfEqCase*{#1}{%
+    {null}{(line~1)}%
+    {scalar}{(lines~2-5)}%
+    {tuple}{(line~6)}%
+    {array}{(line~7)}%
+    {bag}{(line~8)}%
+    {key}{(lines~9)}%
+    }[\errmessage{Unable to ref #1 for value BNF}]%
+}%
+
+\noindent {\bf Virtual databases (VDBs).} A typical web application accesses data residing in a variety of different sources, such as databases, application servers (typically storing session-scoped variables), and browsers (typically storing page-scoped variables). To simplify the application development, \projname\ abstracts out the different sources and represents all data uniformly as a single \emph{virtual database (VDB)}. A VDB instance is a tuple of the form $\langle x_1 : v_1, \ldots, x_n : v_n \rangle$, where each $x_i$ is a variable with value $v_i$. To support the needs of visualization components, values in VDBs are represented using an extension of the commonly employed JSON data model, described below.\\
+
+%The notation $\env \vdash e \rightarrow v$ denotes that within $\env$ an expression $e$ evaluates to the value $v$, i.e. when every free variable of $e$ is instantiated by the value it references in $\env$. For example, $\langle x: 5, y:3 \rangle \vdash (x + y)/2 \rightarrow 4$. The notation $\env \langle x : v \rangle$ denotes a VDB instance $\env$ extended with a variable $x$ which references $v$.
+
+\noindent {\bf JSON++ values.} Figure~\ref{figure:bnf-value} shows the grammar for JSON++ values. Similarly to JSON, a JSON++ value may be \textit{null} \jsonpplinevalue{null}, \textit{scalar} or \textit{complex}, where scalar values comprise \textit{strings}, \textit{numbers}, and \textit{booleans} \jsonpplinevalue{scalar} and complex values include \textit{tuples} \jsonpplinevalue{tuple} and \textit{arrays} \jsonpplinevalue{array}. JSON++ contains two extensions, which are not part of JSON. (Yet, for the purposes of the JS developer, JSON++ data are represented with JSON objects, which follow specific conventions described in Section~\ref{}.) \yannisk{Make sure that the physical storage of JSON++ values is explained in later sections}
+
+
+The first extension is that a complex value can also be a \textit{bag} \gl{\{\{} $e_1$\gl{,} $\ldots$\gl{,} $e_n$ \gl{\}\}} that contains elements $e_1 \ldots e_n$ in non-deterministic order \jsonpplinevalue{bag}. Bags represent unordered collections of source data, such as the tuples of an SQL table. Bags are also used to represent the inputs of visual units that are inherently order-insensitive, such as for instance the set of markers to be displayed on the Google Maps visual unit. Computations are often faster when they allowed to produce unordered data.  
+%\kianwin{For now, keys are locally unique, not globally unique. This is because: (1) There is the definition issue of how ``global": within a data source, including/excluding intermediate results, or across the entire virtual database? (2) I am concerned that the scope of uniqueness will impose unnecessary overhead for enforcing the constraint. (3) It is not clear yet what benefit we derive from global keys.}
+
+%\kianwin{An alternate BNF is for each value (line~1) to have an optional key. The minor downsides are: (1) The BNF cannot enforce mandatory keys for bag elements. (2) It is not clear why keys are needed for tuple attributes. (3) It is not clear why a key is needed for the root value.}
+
+%\kianwin{Keys are restricted to strings primarily due to implementation concerns: In JavaScript, a hash table (i.e. JSON object) can only have string keys.}
+
+The second extension is that each array/bag element may have a semantic \textit{key} \gl{\#(}$s$\gl{)} \jsonpplinevalue{key}, which is an immutable string uniquely identifying the element within the parent array/bag. Keys allow the easy identification of elements within a bag/array and enable incremental maintenance of the page as we will discuss in Section \ref{} \yannisk{Add reference}. \yannis{IVM needs keys to be tuples.} Although \projname\ supports bags/arrays without key information, by resorting to less efficient maintenance methods, in this work we focus on the interesting case where key information is available. \yannisk{Rewrite as needed based on the assumptions that we make in the IVM section.}
+%\costas{I think we've agreed that bags must have keys while arrays don't have to. Correct?}
+\\   
+
+%Keys are mandatory for both bag elements, but optional for array elements. Nonetheless, keys are also recommended for arrays, since immutable keys are more efficiently indexed (e.g. by using a hash map), in contrast to ordinal positions that shift en-masse whenever insertions or deletions occur.
+
+%\begin{figure}[H]
+%\centering
+%\VerbatimInput[frame=single,numbers=left,fontsize=\small]%
+%{ebnf/vdb/vdb.ebnf}
+%\caption{BNF Grammar for VDB Specifications}
+%\label{figure:bnf-vdb}
+%\end{figure}
+
+%\newcommand{\linevdb}[1]{%
+%    \IfEqCase*{#1}{%
+%    {database}{(lines~1-4)}%
+%    {session}{(lines~5-7)}%
+%    {page}{(lines~8-10)}%
+%    {source name}{(lines~1, 5 and 8)}%
+%    {connect}{lines~2 and 19-21}%
+%    {init and refresh}{(lines~3, 6 and 9)}%
+%    }[\errmessage{Unable to ref #1 for VDB BNF}]%
+%}%
+
+%Figure~\ref{figure:bnf-vdb} shows the BNF for specifying sources and variables for a VDB. \yannisk{We need: (a) BNF and (b) VDB specification for the running example.} A VDB supports data sources such as: databases \linevdb{database}, session-scoped storage provided by application servers \linevdb{session}, and page-scoped storage provided by browsers \linevdb{page}. Each source specifies a name \linevdb{source name}, though the name for a session source is optional since there is typically a unique session store within an application server. A database source also specifies connection credentials (encoded as a JSON++ value, \linevdb{connect}). Figure~\ref{code-examples:vdb:database.vdb} shows an example of connecting to a PostgreSQL database.
+
+%Each source uses \gl{init} directives to specify base variables, and \gl{refresh} directives to specify derived variables \linevdb{init and refresh}. Collectively, sources of a VDB specify a set of variables $x_1, \ldots, x_n$, where each $x_i$ has a unique name. The notation $\env$ denotes a VDB instance $\langle x_1 : v_1, \ldots, x_n : v_n \rangle$, where each $x_i$ is a reference to a JSON++ value $v_i$ within its source. The notation $\env \vdash e \rightarrow v$ denotes that within $\env$ an expression $e$ evaluates to the value $v$, i.e. when every free variable of $e$ is instantiated by the value it references in $\env$. For example, $\langle x: 5, y:3 \rangle \vdash (x + y)/2 \rightarrow 4$. The notation $\env \langle x : v \rangle$ denotes a VDB instance $\env$ extended with a variable $x$ which references $v$.
+
+%\noindent {\bf Variable scope.} \yannis{We enter into deep formalisms and delay the example too much. Furthermore, for our purposes the only usable aspect of the scoped variables are the loop-scoped variables, which also do not make it into the basic examples.} 
+%\yannis{Is the scope discussion talking about client exclusively or it's talking about client-server? The full blown FORWARD must do the latter. Then we should distinguish the server-side session scope from the client-side page scope (DOM).}
+%Each VDB variable has a scope, which indicates the lifetime of the variable and is a consequence of where the variable is stored. A variable can be template-scoped, session-scoped, browser-scoped or database-scoped. The variables of the database scope are the most persistent. They typically reside in a database. A session-scoped variable's lifetime is a single session of the user with the application (even if different templates are displayed). A session attribute of the application server is session-scoped.\yannis{Check last sentence. It assumed client-server and the session being the app server's session. We also need a page scope, which is in some way the session at the client. Technically, a page-scoped variable is stored in the DOM. Hence it is alive while the browser is on the same page/URL.} A template-scoped is defined on a template. Its lifetime is the time period during which the application displays the same template. A browser-scoped variable resides on a browser's persistent database (\yannis{complete with names of browser-side storages and databases}) and is therefore alive as long as this web browser is used, even across different sessions. \yannisk{We have some issues with the scope: (a) Variables defined in templates may not have the same scope. For instance, a variable defined within a for loop, will exist and will be visible only during each particular iteration of the loop. (b) What does it mean for a variable bound to a database to have a certain scope? YannisP: Scope is implied by where the variables are stored. I attempted to make this clear. (c) Given that we have variables defined on top of other variables (similarly to views), should we have any restrictions on the scope that variables in a hierarchy may have? Yannis: I think so. A view should be on the intersection of the scopes of its inputs.(d) We should probably state where the VDB variables are stored in the browser to ensure that they are maintained as necessary. This is especially important for the browser-scoped variables. Costa, do you any ideas where we could store them? YannisP: Are we talking client or client-server? Page/session distinction.\\}   
+
+\noindent {\bf VDB specification.} \yannis{Shouldn't ``data source (name)" and ``variable (name)" be the same thing?} To specify the contents of the VDB, the developer provides the following two pieces of information: First, a connection information for all external data sources (such as host and account information for a database), similar to the one specified in application servers. \projname\ provides support for different types of data sources, such as SQL and NoSQL databases, through wrappers that provide a JSON++ view of the source data.
+%\yannis{We do not make forcefully enough the distinction: There are variables/sources whose scope/lifetime exceeds the page. These variables pre-exist and provide the external data. Then there are variables/sources that are created when the page (i.e., client-side run of the application) starts. Notice that the browser scope would be of the former kind.}
+Second, a list of variables with their associated scopes. This information is provided through a VDB configuration file. For instance, Figure \ref{} \yannisk{Add reference} shows the VDB configuration for our running example. \yannisk{Costa, can you please create the VDB specification file for our running example and add it above together with a short explanation?} 
+In addition to the VDB configuration file, the developer can also define variables in the application templates using \gl{init} and \gl{refresh} directives, as we will describe in Section~\ref{???}. These variables are template-scoped, unless explicitly declared otherwise.\\
+
+%\yannisk{To Do: Introduce the notion of multiple VDB instances (an old definition is commented out in the source). YannisP: Once we have clearly described the storage of each scope, it is easier to explain the instances} \yannisk{Explain that VDB instances inherit their parents' mapping and extend it with the variables defined in them, unless the inner and outer instances contain the same number, in which case the inner wins.} \yannisk{Add examples with nested environment (e.g., google maps example from visual IVM)} \yannisk{Variables that have not been defined have the value `undefined'}.
+
+%\yannisk{Questions: (a) What is the scope of the variables? (b) Is the developer allowed to introduce additional views on top of the base data in the VDB configuration file? If yes, what is the view specification language? (c) Which variables from the VDB can be updated? For instance, can a template assign a new value to a variable mapped to a database table? (d) How does the developer specify information needed for the conversion of the external data to the JSON++ format? For instance, how can he specify the key information for the database view of our running example?} \yannis{(a) Scoping has not been introduced. It should be. (b) Recall the discussion that view variables (i.e., \gt{refresh}) should be introducable to any scope. Therefore there could be a separate ``views" file. Inlining in the templates is just a convenience, unless the view is local to a \gt{for}. The local-to-\gt{for} case can be avoided in this paper.}
+
+
+%Similar to classical databases, a VDB's contents at different points in time are represented by different VDB instances. In addition, a VDB's contents at the same point in time are also represented by multiple VDB instances, since a data source may have multiple corresponding instances (unlike persistent databases). For example, when users A and B login concurrently, each has a separate session, and thus each accesses a different VDB instance. As another example, a user who uses two browser windows will access a different VDB instance for each browser window. Each VDB instance is uniquely identified by a \textit{VDB instance id} $(k_1 : v_1, \ldots, k_m : v_m)$. For each source $i$ in the VDB, its source name $k_i$ maps to a JSON++ value $v_i$ that uniquely identifies a data source instance. For example, a session source is uniquely identified by its session cookie. In addition to data source names, $k_i$ can also be a \gl{for} iterator variable, as described in Section~\ref{section:templates}.
+

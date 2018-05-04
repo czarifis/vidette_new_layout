@@ -1,0 +1,195 @@
+\section{Visualization}
+\label{section:visualization}
+
+
+
+% \input{running-example-template}
+
+
+
+\begin{figure*}
+\centering
+%
+%
+\begin{minipage}[c]{7.5cm}
+%
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+\textbf{<\% let} age_groups = 
+   SELECT agegroup, count(*) AS total 
+   FROM (SELECT CASE
+    WHEN age BETWEEN 0 AND 9 THEN '0 to 9'
+    WHEN age BETWEEN 10 and 19 THEN '10 to 19'
+     ...
+    FROM (SELECT * FROM page_views pv join visitors v 
+          on pv.v_id = v.vid where time BETWEEN 
+          \directive{print}{min_time} and 
+          \directive{print}{max_time}) joined_data) jd
+   GROUP BY agegroup  
+   ORDER BY agegroup ASC \textbf{\%>}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Data retrieval}
+\label{figure:running-example:age-group-data-retrieval}
+\vspace*{0cm}
+\end{minipage}
+
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+age_groups = [
+   \{age_group: '0 to 9', total: 12\}, 
+   \{age_group: '10 to 19', total: 67\},
+   \{age_group: '20 to 29', total: 84\},  ...]
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Query Result}
+\label{figure:running-example:age-group-query-result}
+\vspace*{-0.2cm}
+\end{minipage}
+%
+\end{minipage}
+\hspace{1cm}
+\begin{minipage}[c]{6cm}
+
+\begin{minipage}[c]{8.5cm}
+\begin{code}
+  \directive{unit}{highcharts}
+  \{
+    title: 'Visitor information',
+    xAxis : \{ 
+      labels : [
+        \directive{for}{v \textbf{in} age_groups} 
+          \directive{print}{v.age_group} 
+        \directive{end for}{}]
+    \}
+    series: [\{
+      data: [ \directive{for}{v \textbf{in} age_groups}
+          \{
+            y  : \directive{print}{v.total}
+          \}
+        \directive{end for}{} ]
+    \}]
+  \}
+  \directive{end unit}{}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Template \texttt{temp\_view}}
+\vspace*{0cm}
+\label{figure:running-example:age-group-template}
+\end{minipage}
+\end{minipage}
+\vspace*{-0.05cm}
+\caption{Template, template instance, and UAS configuration file for the running example}
+\vspace*{-0.3cm}
+\end{figure*}
+
+
+
+\costas{Mention that the problems are: 1) Initial installation 2) Data conversions, 3)Use of imperative code, 4) Most of these libraries do not generate interactive visualizations}
+
+The main challenge when generating visualizations in interactive notebooks is the variance between the APIs of the visualization libraries. For each visualization library the analyst decides to use, she has to perform an installation of the respective packages (which requires advanced technical knowledge on its own), read lengthy documentation pages that dictate how to use functions provided by each library and then engage in tedious imperative programming in order to ``massage" the existing datasets into a set of formats accepted by each employed API function.
+
+After the data analyst has completed this tasks, she ends up with visual components that, while they can be informative, they cannot be used for further data exploration, without the need of additional imperative code. Specifically, depending on the employed visualization libraries, the data analyst either ends up with non-interactive visualizations, that are essentially static images, or with visualizations, that while they are interactive, this interactivity cannot be used as a part of the analysis, as it will not trigger any changes to other parts of the notebook. In either case, the analysis does not gain much value from such visual components.
+
+
+\subsection{\projname\ Visual Units}
+\label{section:visual Units}
+
+\noindent To shield analysts from the laborious task of constructing visualizations, \projname\ abstracts out each visual component as a \projname\ \emph{visual unit} (or simply \emph{unit}). In the eyes of the analyst a visual unit is simply a black box that takes as input a JSON value that describes the visualization, namely, unit instance. The visual unit internally uses the unit instance to invoke the appropriate renderer calls that will generate the expected visualization. As such a particular instantiation of the unit  can be described as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. 
+
+
+For instance, Figure \ref{figure:running-example:unit-body} shows a unit instance of type \texttt{highcharts}. The unit instance describes all the information that will be displayed in the visualization (such as the title of the chart, the labels on the x axis and so on). Each visual unit, comes with a unit instance schema that describes the format of the unit instance.
+
+
+%Based on this idea, \projname\ abstracts out the entire visual page in the form of a logical specification, referred to as a \emph{template instance}. The template instance contains a description of the visual units that should be displayed in the page together with their inputs. For instance, Figure \ref{???} shows the template instance of our running example. It consists of two unit instances, one of type HighCharts and one of type \ref{???}. Each unit instance is denoted as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. A special type of unit is an HTML unit for displaying HTML content. An HTML unit instance is of the form $\gl{<\% html \%> } e_1 \ldots e_n \gl{ <\% end html \%>}$, where $e_1, \ldots, e_n$ are HTML elements.
+
+\subsection{Template}
+\label{section:template}
+
+
+\eat{
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{template}             & \gp   & \gl{<\% template} \gn{template\_name} (\gn{param\_list}) \gl{\%>}                    \\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{unit}
+\\
+    &                           &       & \gl{<\% end template \%>}                                         \\
+ 2  & \gn{param\_list}			& \gp   & ( \gn{var\_name} (, \gn{var\_name})* )? 
+\\ \hline
+ 3  & \gn{unit}         & \gp   & \gl{<\% unit} \gn{unit\_class} \gl{\%>}               \\
+    &                           &       & ~~ \gn{value}                                         \\
+    &                           &       & \gl{<\% end unit \%>}                                 \\
+ 4  & \gn{value}                & \gp   & \gn{jsonpp\_value} %\text{(see Figure~\ref{figure:bnf-value})} 
+\\
+ 5  &                           & \gd   & \gn{unit}                                     
+\\
+ 6  &                           & \gd   & \gn{print}                                                        \\
+ 7  &                           & \gd   & \gl{[} \gn{for} \gl{]}                                                                                \\
+ 8  &                           & \gd   & \gl{<} \gn{for} \gl{>}                                                                                \\
+ 9  &                           & \gd   & \gn{if}                                                                                 \\
+  
+ 10  &                           & \gd   & \gn{bind}                                                         \\
+11  &                           & \gd   & \gl{\{} \gn{event}*                                               \\
+    &                           &       & ~~ (\gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value}                                              \\
+    &                           &       & ~~ (\gl{,} \gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value})* )? \gl{\}}                                           \\ \hline
+12  & \gn{let}                 & \gp   & \gl{<\% let} \gn{var\_name} \gl{=} \gn{expr} \gl{\%>}            
+\\
+13  & \gn{print}                & \gp   & \gl{<\% print} \gn{expr} \gl{\%>}                                 \\
+14  & \gn{for}                  & \gp   & \gl{<\% for} \gn{var\_name} \gl{in} \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{value}
+\\
+    &                           &       & \gl{<\% end for \%>}                                              \\
+    
+14  & \gn{if}                  & \gp   & \gl{<\% if}  \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{value}
+\\
+ &                           &       & ~~ (\gl{<\% elif}  \gn{expr} \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})*    
+ \\
+ &                           &       & ~~ (\gl{<\% else}  \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})?    
+\\
+    &                           &       & \gl{<\% end if \%>}                                              \\
+15  & \gn{bind}                 & \gp   & \gl{<\% bind} \gn{var\_name} = \gn{expr} \gl{\%>}                             \\
+16  & \gn{event}                & \gp   & \gl{<\% event} \gn{event\_name} \gn{action\_name} \gl{\%>}        \\
+17  & \gn{expr}                 & \gp   & \gn{js\_expression}                                               \\
+18  &                           & \gd   & \gn{source\_expression}                                                   \\
+19  &                           & \gd   & \gn{json\_path}                                                   \\
+\hline
+\end{tabular}
+\caption{BNF Grammar for Templates}
+\label{figure:bnf-template}
+\end{figure}
+}
+
+\costas{We should make it clear in the intro that \projname\ operates on a JSON datamodel. This means that source wrappers, visual units and templates all operate on the same model, no conversions are required from one to another. Additionally. since our datamodel is plain-old javascript objects, the analyst does not need to learn a new API in order to interact with our values.}
+
+\emph{Templates} are declarative specifications that can be used to generate \projname\ variables or unit instances. The template language supports a set of \emph{template directives}, all of which operate on the JSON datamodel. These directives are used to describe computation, define variables and set up data collection. Due to lack of space we do not include a figure containing a formal BNF grammar for the template language, instead we simply describe each of them in detail and provide a concrete example that illustrates their use. 
+
+
+
+
+\noindent {\bf Defining variables.} A template may define variables that are added to the notebook's environment so that they can be used in subsequent computation. The $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ directive defines variable $x$ and assigns to it the result of the expression $E$. $E$ can denote three types of expressions: path navigation on JSON data, invocation of a python function that performs computation by using as input and output JSON values or a source-specific language (such as a SQL query). For instance, the template shown in Figure \ref{figure:first-running-example:data-retrieval} employs a \gl{let} directive to create a variable \texttt{readings} containing the visitor information that will be displayed in the chart (retrieved from a relational DBMS through an SQL query).
+
+\noindent {\bf Reporting data.} Value assignments and iterations over collections are specified by using the \gl{print} and \gl{for} directives. The $\gl{<\% print } E \gl{ \%>}$ directive evaluates the expression $E$ and returns the result, while the $\gl{<\% for } x \gl{ in } E \gl{ \%> } B \gl{ <\% end for \%>}$ directive specifies that variable $x$ iterates over the result of $E$ and, in each iteration, it instanciates the body $B$ of the \gl{for} loop. In Figure \ref{figure:first-running-example:main-template}, in lines 7-9 and 14-18 a \gl{for} directive is used to iterate over the readings retrieved from the database and for each reading, it generates a new JSON value, with the use of the \gl{print} directive. Particularly, in line 8 the template generates a string (the time label), which is added to the labels array (which contains the labels that will appear on the x axis of the chart). In lines 15-17 it generates a JSON object of the form \{y: ...\} and adds it to the data array. The data array in highcharts contains the points that will appear in the chart.
+
+\noindent {\bf Collecting data.} In addition to specifying how to compute a template instance, the template's \gl{bind} directive allows the analyst to specify user input collection. Specifically, the $\gl{<\% bind x} \gl{ \%>}$ directive describes a two-way bind that will be created between the part of the unit instance appearing on its left side and to variable $x$. For instance, in Figure \ref{figure:first-running-example:main-template} in lines 10-11 we create a two-way binding between the min and max boundaries of the chart and the min and max values of the time labels that have been retrieved (namely min\_time and max\_time). While the user interacts with chart he can select a particular region in the chart which in turn updates the values $min\_time$ and $max\_time$. This event invokes an internal propagation algorithm (which will be described in the next section) which triggers the revaluation of the \projname\ statements that use the values $min\_time$ and $max\_time$ in other parts of the notebook.
+
+%In contrast to the \gl{<\% print \%>} directive, which is a one-way binding from the UAS to the visual instance, the \gl{<\% bind \%>} directive specifies a two-way binding between the UAS and the visual instance, thus allowing values to be collected from the visual interface. For instance, \yannisk{TBD}\\
+%the heat map template (Figure~\ref{figure:running-example:main-template}) specifies that the value of the slider will be bound (i.e., assigned) to the \texttt{threshold} variable.\\
+
+
+

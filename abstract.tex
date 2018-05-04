@@ -1,0 +1,93 @@
+
+\begin{abstract}
+
+
+
+
+\eat{\remark{This abstract is way too long. Most of it should be in the introduction. We should try to keep it under half column with a flow like: issue -> "This paper proposes..." -> Results if any.}}
+
+\eat{
+A plethora of tools and frameworks has been proposed for streamlining admittedly arduous tasks that often need to be carried out in most data science projects, such as data retrieval, data curation and visualization. \eat{Since these tasks, typically, have to be carried out in most data science projects, a significant portion of the afore-mentioned tools, focuses on providing a simple-to-use way for completing them. }Such tools, however, often seem to limit flexibility as they only focus either on a predetermined set of use-cases or on only a small fraction of tasks in a much larger analytical process. This lack of flexibility often pushes code-literate data scientists to the tested and proven path of interactive notebooks such as Jupyter. 
+}
+
+\eat{
+Interactive notebooks allow the use of popular, high-level and highly expressive imperative languages, such as python, for analyzing data and composing the results into an easily readable notebook-like interface. Due to the wide popularity of such languages, there is also a huge collection of third-party libraries that can be used by data scientists as building blocks of a much bigger analytical process. Furthermore, the web environment of notebooks enables collaboration between data scientists, since it allows them to directly interact with the user interface in order to develop and run code, process data, generate visualizations, and lastly, compose their findings into an interactive (and re-runnable) report-like page, that contains code, visualizations and textual description of the analysis.
+}
+
+\eat{
+y employing a high-level language, like python, which is used extensively by domain experts across multiple disciplines, data scientists can use a huge collection of third-party libraries that data access, data processing and visualization purposes. Furthermore, the web environment of such interactive notebooks enables collaboration between data scientist, who can directly interact with the user interface in order to produce and run code that analyzes data and generates visualizations and eventually, combine their findings into an interactive (and re-runnable) report-like page, that comprises code, visualizations and textual description of the analysis.
+}
+
+Interactive notebooks allow the use of popular, high-level and highly expressive imperative languages, such as python, for composing a wide variety of data analytics projects. The interface they provide, enables data scientists to import data, analyze them and compose the results into easily readable report-like web pages, that can contain re-runnable code, visualizations and textual description of the entire process, all in one place. Scientists can then share such pages with other users in order to present their findings, collaborate and further explore the underlying data.
+\eat{
+they enable data scientists to compose their findings into an easily readable report-like interface. This interface can contain re-runnable code, visualizations and textual description of the performed analysis, all in one page. Data scientists can share such pages with non-experts in order to present their findings or trigger discussions for further exploration.
+
+. Because of such capabilities, notebooks are extremely popular in the data science community, as they allow scientists to share their analysis with a non-expert in order to present their findings or trigger discussions for further exploration.
+}
+\eat{Due to the wide popularity of such languages, there is also a huge collection of third-party libraries that can be used to facilitate an unbounded number of potential analyses. }
+
+However, as we show in this work, interactive notebooks are still suboptimal with regard to interactivity and ease of use, both for the data scientist that composes the analysis and for the reader. First, installing and using libraries that obtain, process and visualize data, requires technical expertise that often exceeds the skill-set of a typical data scientist. Secondly, while the user interface allows readers to extend or rerun the code included in the notebook, it does not allow them to directly interact with the generated visualizations in order to trigger additional computation and further explore the data. This means that only code-literate readers can further interact with and extend such notebooks, while the rest can only passively read the provided analysis.
+
+
+\eat{
+support the generation of interactive visualizations, this interactivity is limited and cannot be used for further data exploration.
+
+is not an integral part of the analysis. 
+}
+
+\eat{
+Interactive notebooks allow the use of popular, high-level and highly expressive imperative languages, such as python, for analyzing data and composing the results into an easily readable visualization rich notebook-style interface. Due to the wide popularity of such languages, there is also a huge collection of third-party libraries that can be used to facilitate an unbounded number of potential analyses. However as we show in this work, interactive notebooks are still suboptimal with regard to ease of use and interactivity. Installing and using libraries that obtain, process and visualize data, requires technical knowledge that often exceeds the skill-set of a typical data scientist. Lastly, while such notebooks support the generation of interactive visualizations, this interactivity is not an integral part of the data analysis process. 
+}
+
+\eat{
+However as we show in this work, interactive notebooks are still suboptimal with regard to ease of use and interactivity. Setting up notebook environments and dependencies, obtaining and combining data and generating the respective visualizations, requires technical knowledge that often exceeds the skill-set of a typical data scientist. Lastly, while such notebooks support the generation of interactive visualizations, this interactivity is not an integral part of the data analysis process. 
+}
+To address these issues, we propose {\projname}, a notebook engine that enhances notebooks with capabilities that benefit both data scientists and non-technical notebook readers. \projname\ uses a declarative language to simplify data retrieval and data visualization for analysts. The generated visualizations are capable of collecting the reader's input and reacting to it. \eat{Specifically, it facilitates communication with database sources, data curation and creation of interactive visualizations that can react to the reader's input.}The user input is used by \projname's propagation algorithm, to identify subsequent parts of the notebook that depend on that input and cause their reevaluation. By doing this, \projname\ offers enhanced data exploratory capabilities to readers, without requiring any coding skills.
+
+\eat{
+which can supports a propagation algorithm capable of using that input to automatically reflect changes to subsequent parts of the notebook, thus offering enhanced data exploratory capabilities to readers, without requiring any coding skills.
+}
+\eat{
+. Our proposed extension adds a template language that operates on JSON structures and facilitates -- among others -- communication with databases and the creation of interactive plots. In this paper we present a sample workflow that highlights the potential of such an extension for use in data analysis tasks.
+}
+\eat{
+
+Setting up an interactive notebook, is still a tedious process. Data scientists are asked to use unix commands to install the interactive notebooks as well as all the libraries that will be needing throughout their analysis. Additionally, after the installation has been completed data analysts need to transfer the data sets that will be used for the analysis, into a directive that is accessible by the interactive notebook environment
+
+
+Web Frameworks that adopt the Model-View-ViewModel (MVVM) design pattern have been extensively used in the web community for the development of fully-fledged applications. Such frameworks, typically, provide algorithms that automate the maintenance of the application's view when mutations occur to the underlying data (also known as model). The automation of this process, commonly referred to as Application View Maintenance (AVM), significantly improves developer productivity, since it alleviates the developer from manually performing this task. Such algorithms are also capable of mutating individual parts of the view when the underlying data mutate, thus avoiding a full reload and rerendering of the entire application view, (a  very expensive operation for HTML content, especially in the mobile setting). 
+
+However, as we show in this work, AVM algorithms of existing MVVM frameworks are still suboptimal performance-wise. By continuously exploring the model for mutations, they have a complexity that is proportional to the size of the model and not to the size of mutations. This suboptimality combined with the low computational power of mobile devices, can lead to severely inefficient mobile apps, which can also impact the user experience.  To address this issue, we propose a novel AVM algorithm which uses existing incremental view maintenance techniques, to directly identify the mutated parts of the model and infer the respective parts of the view that need to be updated, while avoiding a blowup in complexity proportional to the size of the model of the application. The complexity and memory consumption of the proposed algorithm are shown to be typically significantly lower than existing approaches.
+
+
+
+Many web applications deliver continuously updated live visualizations, such as live maps, charts, etc. Developing such applications has been traditionally laborious and error-prone, as developers had to write imperative code to incrementally render the visualizations when the underlying data change. This led to the recent emergence of MVVM frameworks (such as Google's \angular\ and Facebook's \react) that improve developer productivity by allowing them to declaratively specify visualizations through templates. However, existing MVVM frameworks exhibit two important drawbacks: First, their incremental rendering algorithms incur significant performance penalties. Second, although some of them allow the use of existing JavaScript visualization components, wrapping such components is still cumbersome.
+
+\costas{First sentence of following paragraph does not make sense.}
+
+
+To address these issues, we present \projname; a web application framework that extends the high productivity of MVVM templates to complex visualization libraries and combines it with highly efficient incremental rendering techniques. \projname\ offers a declarative template language that is expressive enough to interact with complex visualization libraries. \projname\ templates describe visualizations as semi-structured views\costas{Not crucial, but views are fairly structured, since units have some notion of a schema}, which are efficiently updated by novel incremental view maintenance techniques, which take into account the capabilities of the components. In this paper, we prove that \projname's incremental rendering algorithms have superior complexity than the state of the art. Experimental results validate the complexity results and show that \projname's incremental rendering can be order of magnitudes more efficient than existing approaches. Moreover, line-of-codes experiments show that the performance gains are accompanied by productivity gains for application developers when interacting with complex visualization libraries.
+
+
+% Second version of the abstract below
+\eat{
+Many web applications deliver live visualizations that are information-dense and continuously updated. Developing such applications has been traditionally laborious and error-prone, as developers had to write imperative code to specify how changes to the underlying data affect the visualizations shown on the page. This led to the recent emergence of MVVM frameworks (such as Google's \angular) that improve developer productivity by allowing them to declaratively specify visualizations through templates. The declarative nature of templates allows such frameworks to automate the propagation of changes from the data to the visualizations. However, existing MVVM frameworks exhibit two important drawbacks: their automatic change propagation algorithms incur performance penalties and the interaction with existing visualization libraries, such as maps, charts, etc. is still cumbersome.
+
+To address this problem, we propose \projname; a web application framework that extends the high productivity of MVVM templates to complex visualization libraries and combines it with highly efficient change propagation techniques. The \projname\ offers a declarative template language that is expressive enough to interact with complex visualization libraries. \projname\ templates describe visualizations as semi-structured views, which are efficiently updated by extending incremental view maintenance techniques. In this paper, we prove that \projname's change propagation algorithms have superior complexity than the state of the art. Experimental results validate the complexity results and show that \projname's change propagation can be order of magnitudes more efficient than existing approaches. Moreover, line-of-codes experiments show that the performance gains are accompanied by productivity gains for the application developers.  
+}
+
+% First version of the abstract below
+\eat{
+Many applications deliver live visualizations that are information-dense and continuously updated. They are typically implemented with MVC frameworks and JavaScript components (e.g. maps and barcharts), which provide performant rendering methods for incrementally updating visualizations, but are laborious and error-prone to use. This has led to the recent emergence of MVVM frameworks (such as Google's \angular) that improve developer productivity by declaratively specifying visualizations using templates. On the downside, MVVM frameworks incur performance penalties (and energy penalties in the mobile setting) because they always re-evaluate the entire template. Furthermore, the process of wrapping JS components into template units is extremely cumbersome.
+
+\costas{We may have to add a definition of what "re-evaluation" means. We should distinguish between re-evaluation and re-rendering.}
+
+The \projname\ application framework combines the high productivity of MVVM templates (also suggested by database research approaches) with high performance, as a result of automatic optimizations.
+
+Using \projname, the novice database-oriented developer specifies visualizations with declarative templates, which combine query language and template language concepts and have the expressiveness to represent complex visualizations. A template is essentially a semi-structured view that outputs a JSON and HTML template instance. \costas{We need to define template instance before using it, also we should maybe define the template as a view definition/description instead of a view. The difference between a template and the template instance isn't clear otherwise} \projname\ employs automatic optimizations, where the framework (a) translates incremental diffs of the data sources into diffs of the template instance, and (b) automatically chooses an efficient set of rendering methods to update the visualizations. An advanced JavaScript developer can also declaratively adapt existing JavaScript components that support incremental APIs into state-based \projname\ components that respond to diffs.
+
+The provided analysis shows that \projname's algorithms have superior big-O complexity to the current state of the art. The experiments validate the effect of the optimizations on running time and energy consumption. Lines-of-code measurements show that the performance gains are accompanied by productivity gains for both the database-oriented developer and the JavaScript developer.
+}
+}
+\end{abstract}
+

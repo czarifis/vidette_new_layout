@@ -1,0 +1,286 @@
+\section{\projname\ Application Development}
+\label{section:programming-model}
+
+\yannisk{This section is currently disconnected from the introduction. After we decide on the main contributions in the introduction, we should connect it with the introduction.}  We present the structure and semantics of a \projname\ application as seen by its application developer. The internal execution of the application by the framework, along with the automatically applied optimizations, is the topic of Section \ref{section:architecture}. \yannis{There are two kinds of developers: The database-oriented developer and the JS developer. A JS developer can be an application developer. Hence, this is not the defining difference.} \\ 
+
+\noindent \textbf{Running example.} We show how a developer can use \projname\ to create a temperature monitoring dashboard. The dashboard, shown in Figure~\ref{figure:running-example:screenshot}, consists of a chart showing the temperature readings as they arrive from a backend database. \yannisk{We should be careful how we describe the source of the new readings} The readings are represented by data points that are color-coded according to their value: Normal temperatures are shown in yellow, while lower and higher temperatures are shown with gradients of green and red, respectively. The normal temperature can be set by the user by utilizing the slider shown on the right side of the chart. %\yannis{I added ``range". Correct?}
+
+The dashboard uses a combination of visualization components, allowing us to demonstrate how \projname\ interfaces with complex visualization libraries. In particular, the application employs two visualization components; a HighCharts component~\footnote{\texttt{http://www.highcharts.com/}}, displaying the chart and a Slider component for setting the normal temperature. \yannisk{Should we explain that we build the slider component in house? I vote for now, as it may raise questions.} \costas{We could say that we've wrapped all input types (see table: "Attribute Values" in: http://tinyurl.com/h5ktgqa) into units but it still does not explain why the range is color coded...}\\
+
+\costas{Running example will be replaced. Revisit similar issues after it's finalized}
+
+
+% Programming model figure
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/programming-model.pdf}
+\caption{Programming model for an application developer. Actions, templates and UAS specifications are the pieces that are provided by the developer.}
+\label{figure:programming-model}
+\end{figure}
+
+
+\yannis{About Figure: \ref{figure:programming-model}: instead of a virtual database we can go for just a series of active wrappers ("active" in the sense that they catch modifications)}
+
+\yannis{There are two kinds of developers and the introduction never made the distinction: A db-oriented developer, who relies on the expressiveness of templates, and a Javascript developer who can write code, writes functions, interfaces components, writes complex actions. The distinctions need to become clear because some contributions pertain to the second kind of the developer. } \costas{I disagree with this distinction. Both developers need to write actions (in JS) in order to handle events. However, I do buy the argument that a naive application developer may not be able to write his own (delta) functions. Perhaps we should introduce the ``template function developer" (that makes reusable template functions) or simply mention that any ``advanced developer" can do everything a naive application developer does plus unit wrapping, (delta) function declaration and perhaps source wrapper declaration}
+
+\textbf{Application structure.} Figure~\ref{figure:programming-model} shows the conceptual, developer-oriented architecture of a \projname\ application. It consists of:
+(a) a \textit{unified application state (UAS)}\yannis{See above...}, abstracting access to the data sources that the application uses (e.g., the sensor readings in our running example), (b) \textit{template instances}, which abstract the structure of the \textit{visual pages} that are shown in the browser (e.g., describing in our running example the data points that will be shown and the visualization libraries that will be used to display them), %\yannis{Figure~\ref{figure:programming-model} should say ``Template Instances" in plural and use the ``multiple overlaid" boxes visualization that is used for Actions. But with blue color.}
+(c) declarative \textit{templates}, specifying how the data in the UAS are transformed to template instances,
+%\yannis{Figure~\ref{figure:programming-model} should say plural ``templates" and have a corresponding visualization.}
+and (d) \textit{actions}, specifying the procedures that should be executed in response to events. The procedures may decide which template should be displayed and they may modify the UAS. 
+
+During the runtime, an application follows an \textit{action-template cycle} in which actions activate templates that produce visual page instances. As new events occur they trigger respective actions again thus restarting this cycle. In particular, an action-template cycle consists of the following steps (denoted by numbers in Figure~\ref{figure:programming-model}): %First, the data used by the application (step 1) are abstracted as a virtual database (UAS) instance (step 2). 
+%\yannis{The fact that we associate template-action cycle steps with the abstraction gives the damaging impression that there is actual computation involved in going from source data to UAS. I have changed the text to remove this impression but you need to remove the steps 1 and 2 from Figure~\ref{figure:programming-model}.}
+An action is activated (step~1) and chooses the template that will be displayed. At that time the action can also cause side-effects to the application state by interacting with the UAS instance. 
+Subsequently, \projname\ evaluates the chosen declarative template on the UAS (step 2), which produces an abstraction of the visual page in the form of a template instance. Then \projname\ automatically produces a new visual page instance from the template instance (step 3). Finally, user interface events are caused as the user interacts with the visual page instance, thus triggering actions (step 4), that lead to repetition of the action-template cycle. We next describe each of the pieces of a \projname\ application in detail. \costas{It is possible for an action to not trigger a template (for instance an action could simply collect data from the page and store them locally or transmit them over-the-wire to a remote source)}
+
+%Figure \ref{???}a, b, and c shows the virtual database, template and template instance for our running example, respectively. We next describe each of these components in detail.\\
+
+\input{running-example-template}
+
+\subsection{Unified Application State (UAS)}
+\label{section:vdb}
+
+%\textbf{Abstracting out application data through a virtual database.}
+Modern web applications retrieve data from a variety of sources, including backend databases (both SQL and NoSQL), browser storage (such as IndexedDB), web services and user input (through forms). \projname\ abstracts all data sources into a \emph{unified application state} (in short \emph{UAS}), which serves two purposes: First, it provides unified distributed accesses to multiple sources, in the spirit of virtual databases. Second, it efficiently observes modifications to data sources, which is an important step to \projname's incremental computation ability and a major topic of this paper. A UAS instance is a tuple of the form $\langle x_1 : v_1, \ldots, x_n : v_n \rangle$, where each $x_i$ is a variable bound to the value $v_i$.
+
+\costas{The UAS instance corresponds to the (Client-Side) Application Model}
+
+\yannis{if we abolish the UAS and go with the functions approach, this section says that the results of the functions are JSON++
+TBD whether we need functions that also input JSON++. If we do, then it can be the template language itself. It only lacks recursion. At any rate it is probably journal version material.}
+
+UAS values are represented through the JSON++ data model: an extension of the (common in web applications) JSON data model with support for unordered collections (bags). This extension is crucial to support  propagation of changes that happen to bags of tuples (typically produced by relational DBMSs) as we will see in Section \ref{section:template-ivm}. A JSON++ value can be a scalar (i.e., string, number or boolean), tuple of attribute/value pairs, array of values (i.e., ordered collections), or bag of values (i.e., unordered collections). \costas{Since bags and JSON tuples inherently use keys, perhaps they can be both encoded as tuples thus simplifying the data model that has to be understood by unit developers - Note, we agreed to do it this way during our last meeting.} Complex values (i.e., tuples, arrays, and bags) recursively contain other JSON++ values, thus allowing the representation of nested data. Finally, internally each value may also contain a \textit{provenance annotation} (in short \emph{provenance}), which is leveraged by the change propagation algorithm. Note, the application developer need not be aware of it. 
+\eat{A provenance annotation is required for all values of a bag and is optional otherwise. \yannisk{The presence of ids does not have to do with the type of the JSON++ value. Instead it has to do with the type of diffs that the source can produce. For instance, in our running example the output of the SQL query is an array (since the query uses an order by clause), but the elements of the array should still contains ids, since relational IVM solutions cannot produce diffs that use ordinals.} \yannisk{The framework is currently missing a few features for the full support of ids. In particular: (a) Since bag elements should contain ids, the application developer should specify whenever she creates a bag in the template how the ids of its elements will be populated. Similarly, for the result of SQL queries. Any ideas on how to do that? (b) With the inclusion of ids in arrays, a single diff can be represented in two different ways (through an id or through an ordinal). Thus simulation should be extended to handle this case as well. (c) How are JSON++ values physically represented? Are they encoded in JSON?} 
+}
+
+The following table shows the notation used to represent the different types of JSON++ values:\\
+
+\noindent\begin{tabular}{@{}l | l}
+JSON++ Value & Type
+\\ \hline
+``string'' | x | true/false & Scalar (string/number/boolean)
+\\
+$\langle x_1 : v_1, \ldots, x_n : v_n \rangle$ & Tuple of attribute/value pairs
+\\
+$[ v_1, \ldots, v_n ]$ & Array of values
+\\
+$\{\!\{ v_1, \ldots, v_n \}\!\}$ & Bag of values
+\\
+$\#(k_1, \ldots k_n) \text{ }v$ & Value with provenance $(k_1, ..., k_n)$
+\\
+\end{tabular}
+\vspace*{0.4cm}
+
+
+
+To associate the UAS instance with data from a particular source, the developer has to specify the type of the source (e.g., SQL database) and, when applicable, provide the parameters required for connecting to the chosen source type (e.g., host and account information for the database server). This information has to be provided in the form of a UAS configuration file. For instance, Figure~\ref{figure:uas-config-file} shows the UAS configuration file for the running example. In the case of browser resident JSON++ objects, the developer simply needs to access them via the UAS interface. \yannis{Kosta, is the previous sentence fair?} \costas{Not really, you're probably talking about accessing variables of the client-side Model. The client-side Model is simply a collection of Plain Old JS Objects. This collection of variables is encompassed by the client-side (JavaScript) VDB/Model variable. Since they are all POJO's no API is required, the developer interacts with them as she would with any other JS Object. \eat{(If however we decide to use a different construct (other than POJSO) for bags we might have to introduce an API for accessing that)}}
+As we will see in Section \ref{section:template}, the template may also introduce new variables to the UAS. Some of these variables are associated with derived data (i.e., they are tantamount to database views) and some other ones are associated with page input. \yannisk{We should give more details on how the configuration file affects the UAS instance. We could extend the UAS instance to contain non-JSON++ values corresponding to sources (e.g., the instance may contain a variable \emph{db} corresponding to a relational database) but this breaks the nice abstraction that we want to create. Any ideas/suggestions?} \yannis{Don't we need to extend the JSON++ with arbitrary enriched types? Is string, number and boolean enough?}
+
+\subsection{Template Instance}
+\label{section:template-instance}
+
+\begin{figure}[t]
+\centering
+%\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{template\_instance}   & \gp   & \gn{unit\_instance}                                       \\
+ 2  & \gn{unit\_instance}         & \gp   & \gl{<\% unit} \gn{unit\_class} \gl{\%>}               \\
+    &                           &       & ~~ \gn{value}                                         \\
+    &                           &       & \gl{<\% end unit \%>}                                 \\
+ 3  & \gn{value}                & \gp   & \gn{jsonpp\_value} %\text{(see Figure~\ref{figure:bnf-value})} 
+ \\
+ 4  &                           & \gd   & \gn{unit\_instance}                              
+\\ 
+\hline
+\end{tabular}
+\caption{BNF Grammar for Template Instances}
+\label{figure:bnf-template-instance}
+\end{figure}
+
+\eat{
+\begin{figure}[t]
+\begin{code}{B}
+init() \{
+   display(temp\_view);
+\}
+\end{code}
+\caption{Initial action}
+\label{figure:action}
+\end{figure}
+}
+
+
+
+\yannisk{Double-check line numbers for all figures}
+
+The main challenge at the visual layer is the variety of visualization libraries that may be used in a web application, along with the fact that tedious low-level programming is required to perform incremental rendering with the APIs provided by those libraries. Modern web applications commonly include a huge variety of visual components, such as charts, maps, and sliders, each with their own APIs.
+
+
+\noindent \textbf{Visual Units} \yannis{Header "Visual Units"}
+
+\noindent To shield developers from low-level programming, \projname\ abstracts out each visual component as a \projname\ \emph{visual unit} (or simply \emph{unit}). In the eyes of an application developer a visual unit is a black box that takes as input a JSON++ value \costas{I believe we mean JSON value here, I don't see why the application developer should learn about bags and why they are useful}containing the data to be visualized and parameters potentially supported by the visualization and uses the API of the underlying visualization library to render the visual component. As such a particular instantiation of the unit (denoted as \emph{visual unit instance} or simply \emph{unit instance}) can be described as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. For instance, \templateinstanceline{highcharts-unit-instance} of Figure \ref{figure:running-example:main-template-instance} show a unit instance of type \texttt{highcharts}. The unit instance specifies both the data that should be shown on the chart (as an array of tuples assigned to the \texttt{data} attribute) and the values of the parameters accepted by the unit (such as the chart's title).
+
+\yannis{better to have HTML in the example but do not spend too much time on it in the abstract discussion}
+
+As we will discuss in Section \ref{section:architecture}, visual units are generated by visual unit developers who wrap popular visualization libraries (such as Google Maps, HighCharts, etc) and make them available to application developers through \projname's visual unit library. In addition to the units provided by unit developers, \projname\ also provides a special unit of type \emph{HTML}. In contrast to other units, which expect JSON values, an HTML unit takes as input a sequence of HTML tags, allowing developers to easily create simple HTML content. For ease of exposition we focus in this paper on JSON units. Our results can be easily extended to the HTML unit. \costas{So far we've been talking about JSON++ if we keep that, we should make it clear why in this paragraph we only talk about JSON and HTML}\yannisk{Removed HTML unit encompassing the two JSON units from our running example}
+
+%Yannis comments mentioned to delete the "eaten" sentence
+\eat{Since a single visual component can be described through a unit instance, }An entire visual page instance (potentially containing multiple visual components) can be described through a composition of unit instances. We refer to this logical description of a visual page as \emph{template instance}, as it is not written directly by the developer but is instead the result of instantiating a \emph{template}, as we will see next. Figure \ref{figure:running-example:main-template-instance} shows a template instance for our running example. It consists of two unit instances; a highcharts unit instance (\templateinstanceline{highcharts-unit-instance}) and a slider unit instance (\templateinstanceline{slider-unit-instance}). Note that a unit instance may recursively contain nested unit instances \yannisk{Example?} \yannisk{What does it mean for a unit to be nested within another unit? Can we nest arbitrary units or only units that are designed as such by the unit developer?} \yannis{Arbitrary.} \costas{The child unit is Arbitrary. However, a child unit can only be attached at predefined locations of the parent unit (i.e When the parent unit is google maps, a child unit can only be attached under the infowindow location since that's the only attachment point that is supported by the Google Maps API)}
+Figure \ref{figure:bnf-template-instance} shows the grammar for template instances. Finally, to simplify the architecture, template instances are internally represented as JSON++ values. This is achieved by encoding a list of unit instances $\gl{<\% unit } U_1 \gl{ \%> } v_1 \gl{ <\% end unit \%>}$ \ldots $\gl{<\% unit } U_n \gl{ \%> } v_n \gl{ <\% end unit \%>}$ as a JSON++ tuple \texttt{\{$U_1'$: $v_1$, \ldots, $U_n'$: $v_n$\}}, where $U_i'$ is a unique identifier assigned by \projname\ to the i-th unit instance. \yannisk{OK or too cryptic?}
+
+\yannis{We need reserved keywords for the attribute names that correspond to units. Eg, \_\_myunit} \costas{How can we have a predifined set of reserved keywords given that there's an arbitrary number of possible units each with a unique name?}
+
+%Based on this idea, \projname\ abstracts out the entire visual page in the form of a logical specification, referred to as a \emph{template instance}. The template instance contains a description of the visual units that should be displayed in the page together with their inputs. For instance, Figure \ref{???} shows the template instance of our running example. It consists of two unit instances, one of type HighCharts and one of type \ref{???}. Each unit instance is denoted as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. A special type of unit is an HTML unit for displaying HTML content. An HTML unit instance is of the form $\gl{<\% html \%> } e_1 \ldots e_n \gl{ <\% end html \%>}$, where $e_1, \ldots, e_n$ are HTML elements.
+
+\subsection{Template}
+\label{section:template}
+
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{template}             & \gp   & \gl{<\% template} \gn{template\_name} (\gn{param\_list}) \gl{\%>}                    \\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{unit}
+\\
+    &                           &       & \gl{<\% end template \%>}                                         \\
+ 2  & \gn{param\_list}			& \gp   & ( \gn{var\_name} (, \gn{var\_name})* )? 
+\\ \hline
+ 3  & \gn{unit}         & \gp   & \gl{<\% unit} \gn{unit\_class} \gl{\%>}               \\
+    &                           &       & ~~ \gn{value}                                         \\
+    &                           &       & \gl{<\% end unit \%>}                                 \\
+ 4  & \gn{value}                & \gp   & \gn{jsonpp\_value} %\text{(see Figure~\ref{figure:bnf-value})} 
+\\
+ 5  &                           & \gd   & \gn{unit}                                     
+\\
+ 6  &                           & \gd   & \gn{print}                                                        \\
+ 7  &                           & \gd   & \gl{[} \gn{for} \gl{]}                                                                                \\
+ 8  &                           & \gd   & \gl{<} \gn{for} \gl{>}                                                                                \\
+ 9  &                           & \gd   & \gn{if}                                                                                 \\
+  
+ 10  &                           & \gd   & \gn{bind}                                                         \\
+11  &                           & \gd   & \gl{\{} \gn{event}*                                               \\
+    &                           &       & ~~ (\gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value}                                              \\
+    &                           &       & ~~ (\gl{,} \gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value})* )? \gl{\}}                                           \\ \hline
+12  & \gn{let}                 & \gp   & \gl{<\% let} \gn{var\_name} \gl{=} \gn{expr} \gl{\%>}            
+\\
+13  & \gn{print}                & \gp   & \gl{<\% print} \gn{expr} \gl{\%>}                                 \\
+14  & \gn{for}                  & \gp   & \gl{<\% for} \gn{var\_name} \gl{in} \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{value}
+\\
+    &                           &       & \gl{<\% end for \%>}                                              \\
+    
+14  & \gn{if}                  & \gp   & \gl{<\% if}  \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{value}
+\\
+ &                           &       & ~~ (\gl{<\% elif}  \gn{expr} \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})*    
+ \\
+ &                           &       & ~~ (\gl{<\% else}  \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})?    
+\\
+    &                           &       & \gl{<\% end if \%>}                                              \\
+15  & \gn{bind}                 & \gp   & \gl{<\% bind} \gn{var\_name} = \gn{expr} \gl{\%>}                             \\
+16  & \gn{event}                & \gp   & \gl{<\% event} \gn{event\_name} \gn{action\_name} \gl{\%>}        \\
+17  & \gn{expr}                 & \gp   & \gn{js\_expression}                                               \\
+18  &                           & \gd   & \gn{source\_expression}                                                   \\
+19  &                           & \gd   & \gn{json\_path}                                                   \\
+\hline
+\end{tabular}
+\caption{BNF Grammar for Templates}
+\label{figure:bnf-template}
+\end{figure}
+
+\yannis{About Figure \ref{figure:bnf-template}: the syntax allows a single top level unit, which is probably correct but not what the example does.
+Is the top level unit always html?}
+
+\yannisk{To do: Modify template BNF grammar to make sure that we can have directives appear inside JSON values}
+\emph{Templates} are declarative specifications describing the template instances as a function of UAS data. A template specifies this function through a set of \emph{template directives}, so that it provides syntax similar to well-known template languages, while it is essentially an expression of a functional programming language without recursion. A template also specifies collecting data from the page and catching events \costas{perhaps we mean linking event with corresponding actions?}. 
+
+There are five template directives: \gl{<\% print \%>}, \gl{<\% for \%>}, \gl{<\% let \%>}, \gl{<\% bind \%>}, and \gl{<\% event \%>}. These are used to describe computation, define variables, set up data collection and specify events. We next describe each of them in detail.\\
+
+%Figure \ref{???} shows for instance the template for the heat map view of our running example. As we will explain in Section \ref{section:templates}, the template language is expressive enough to cater for the needs of most visual units and pages encountered in practice, supporting among others iteration through for loops and function calls. An application may contain more then one templates, which can be displayed as the result of actions, discussed next.\\
+
+
+\yannis{From an expressiveness point of view, let does not add anything. The interesting consideration is whether it has a meaning about IVM: materialized vs virtual intermediate result.}
+\noindent {\bf Defining variables.} A template may define variables that are added to the UAS instance so that they can be used in subsequent computation. Variable definition is facilitated by the \gl{let} directive.
+
+The $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ directive defines variable $x$ in the UAS, and assigns to
+$x$ the result of evaluating the expression $E$. The expression $E$ can be a JavaScript expression, a source-specific language (such as a SQL query in the case of relational database sources) or a JSON++ path. For example, the template of our running example (\templateline{let}) employs a \gl{let} directive to create a variable \texttt{readings} containing all temperature readings (retrieved from a relational DBMS through a SQL query).\\
+
+{\bf Reporting syntax and semantics.} Computation in a template is specified using the \gl{print} and \gl{for} directives.
+The $\gl{<\% for } x \gl{ in } E \gl{ \%> } B \gl{ <\% end for \%>}$ directive specifies that variable $x$ iterates over the result of the expression $E$. In each iteration, the body $B$ of the \gl{for} loop is instantiated. For example, the template of our running example (\templateline{for}) uses a \gl{for} directive to iterate over the sensor readings (stored in the \texttt{readings} variable). For each reading, it generates a new JSON tuple of the form \texttt{\{y:\ldots, color:\ldots\}}, which is the data format expected by the HighCharts unit for each data point. \eat{The values of the \texttt{y} and \texttt{color} attributes are specified through print directives, as explained below.}
+
+% Eaten as per Yannis\' comment
+
+The $\gl{<\% print } E \gl{ \%>}$ directive instantiates the result of expression $E$. For example, the template of the running example uses two \gl{print} directives to generate the values of the \texttt{y} and \texttt{color} attributes of each JSON tuple produced by the \gl{for} directive. \yannis{The part between the ``\{\}" could be removed}\{The value of \texttt{y} is created by printing the value of the \texttt{reading} variable (\templateline{print-y}), while the value of \texttt{color} is generated by calling the \texttt{toCSS} function, which takes as input the current reading and the normal temperature (set through the slider) and produces a CSS color code according to the coloring schema explained above (\templateline{print-color}).\}\\
+
+%(Figure~\ref{figure:running-example:main-template}) generates the CSS color of a \texttt{<td>} element (i.e., of a table cell) by instantiating through a print directive the result of the \texttt{toCss()} function (which translates a value to a CSS color code according to the setting of the threshold).
+
+%The $\gl{<\% refresh } y \gl{ = } E \gl{ \%>}$ directive defines \textit{derived variable} (i.e., a variable that is computed using one or more other variables) $y$ in the UAS, and sets $y$ to the result of expression $E$. The expression $E$ can be a JavaScript expression, a SQL query or a JSON++ path. For example, \yannisk{TBD}
+%the heat map template (Figure~\ref{figure:running-example:main-template}) specifies a derived variable \texttt{matrix} for product stock data instantiated to the result of a SQL query.
+%\yannisk{Why does the framework differentiate between base and derived variables?}\\ 
+
+%An important distinction between base variables and derived variables is as follows. A view $Y$ is declaratively specified to be refreshed with the evaluation result of $E_Y$, thus enabling the \projname\ framework to utilize IVM optimizations for incrementally evaluating $E_Y$. In contrast, a base variable $X$ is imperatively updated using either \texttt{INSERT} / \texttt{UPDATE} / \texttt{DELETE} commands on the UAS, or user input through the bind directive (explained below), and therefore the \projname\ framework does not optimize these updates.\\
+
+{\bf Collecting data.} In addition to specifying how to compute a template instance, the template's \gl{bind} directive allows the developer to specify how data are collected from user input on the page.
+
+The $\gl{<\% bind } x = E \gl{ \%>}$ directive specifies that the template instance attribute value in whose position the directive appears will be assigned to variable $x$. This allows UAS variables to become bound to input received by visual units.  \yannis{If UAS has not been defined we need to say what is the JavaScript target.} \costas{We should define a Model/VDB variable, that encompasses every client-side variable used in an application. The target in this case would be the Model.x variable} For instance, the template of our running example (\templateline{bind}) uses a \gl{bind} directive to assign to variable \texttt{threshold} the current value of the slider (which is returned by the slider unit as the value of the \texttt{value} variable). The \gl{bind} directive also allows the developer to specify an expression $E$, whose value will be assigned to the variable when the template is first instantiated. For example, the slider of our running example is initialized with the value 65.\\
+
+%In contrast to the \gl{<\% print \%>} directive, which is a one-way binding from the UAS to the visual instance, the \gl{<\% bind \%>} directive specifies a two-way binding between the UAS and the visual instance, thus allowing values to be collected from the visual interface. For instance, \yannisk{TBD}\\
+%the heat map template (Figure~\ref{figure:running-example:main-template}) specifies that the value of the slider will be bound (i.e., assigned) to the \texttt{threshold} variable.\\
+
+{\bf Specifying event handlers.} Finally, a template allows also the invocation of actions in response to events. The $\gl{<\% event } e \gl{ } a \gl{ \%>}$ directive specifies that whenever event $e$ of the enclosing unit instance occurs, action $a$ is executed. For instance, \yannisk{Costa, please add event to template and add description here.}\\
+%the heat map template (Figure~\ref{figure:running-example:main-template}) specifies that whenever the position of the slider unit is changed, the action \texttt{updateThreshold} will be executed . \yannisk{Costa, what will this action do?} \yannisk{Do we assume that units come with predefined events?}\\
+
+\costas{}
+
+Finally, each template may also accept parameters that are passed to it by its caller by value. When the template is instantiated, \projname\ creates for each parameter an identical-named UAS variable and then sequentially scans the template instantiating its directives.
+
+\subsection{Actions}
+An action is a Javascript procedure that is invoked in response to events and can also read and write to the UAS, cause side-effects in external systems, such as charge a credit card through a REST service, and specify which template should be displayed next. In visualization applications, such as the running example, actions are very simple, since they only specify the next template to be instantiated. For example, see \yannis{Kosta, please put a super simple action.} \costas{Will do after we replace the running example} \costas{I think it makes sense to introduce a system-provided action (named redisplay\_template()), that simply redisplays the current template, when an event occurs. This would allow eager application view maintenance without requiring extra imperative code from the app developer.}
+
+\eat{
+The events that can cause the firing of an action may be initiated by the user (such as a user clicking a button) or an external process (such as a browser timer event fired every 30 seconds or the arrival of data from the server). An application developer can associate an event to an action through the the \gl{<\% event \%>} directive, explained above.
+}
+
+\subsection{Application Specification Summary}
+\yannis{Could be shortened to one sentence at start}
+To specify an application, the developer thus has to provide the following components: (a) a specification of the UAS describing how data from different sources are mapped into variables, (b) a set of templates describing how to transform the UAS to visual pages, and (c) a set of actions, describing how the application should react to events. \costas{(a) assumes that \projname\ is used as a full stack framework, perhaps we should also mention that if the developer wishes to only use \projname\ as a client-side framework, instead of (a) she has to simply provide the JSON objects that constitute the model. Additionally, when we describe the source wrappers it might make sense to introduce a REST/Websocket wrapper that works with 3rd party services. This wrapper would provide diffing capabilities without requiring the app developer to manually diff the model (this diffing would most likely have to take place on the client)}
+
+%\yannisk{How do we explain that templates may also include variable definitions and data collection specification?}
+%\yannisk{In case we describe other MVVM frameworks in the introduction, tie this section in with the introduction by explaining the correspondence between \projname\ and MVVM framework components.} 
+
+%A \projname\ application comprises a \textit{virtual database} \costas{we've been using the term logical page in the previous sections we should bridge the gap by mentioning that this is the UAS} (or \textit{UAS}), \textit{templates} and \textit{actions}. Intuitively, \projname\ models an application as a state machine. (1) The UAS is an abstraction that represents the state across multiple data sources, such as SQL and NoSQL databases. (2) A template visualizes UAS state by instantiating a \textit{template instance}, which is an abstraction of multiple visualizations including HTML, heat maps, sliders and other JavaScript libraries. (3) An action causes state transitions by writing to the VDB.
+
+%During runtime, each page of the application executes in an \textit{action-template} cycle as follows. An \textit{event}, such as the user clicking a button, invokes an action. In the running example, there are three events that invoke an action: (1) when the user first loads the page in the browser, (2) a timer event that fires every 30 seconds \costas{maybe we should replace this with an "event triggered by a new diff coming from the backend" triggers are more efficient than polling} \yannisk{I would suggest to stay with the polling, as allowing the arrival of diffs to also cause actions will complicate the picture we discussed, where the arrival of diffs is decoupled from the actions: diff arrivals simply cause IVM but do not have any effect on the action-template cycle} , and (3) when the user changes the threshold with the slider. An action specifies a procedure that reads and writes the VDB, and causes side-effects in external systems such as charging a credit card through REST services. Typically, the last step of the procedure enqueues a template to be displayed. Figure~\ref{figure:running-example:main-action} shows the \texttt{main()} action of the running example, which is bound to all three abovementioned  events, and simply enqueues \texttt{main.template} to be displayed. \yannisk{Costa, can you please add the figure?} 
+
+%\costas{With a timer or a websocket? Let's defer this until we agree on how we retrieve data from the back-end. We need to know where we draw the line and how we interact with the back-end before we specify the actions}
+
+%Displaying a template instantiates a template instance, such as Figure~\ref{figure:running-example:main-template-instance} for the running example. \yannisk{Costa, I remember that you wanted to change the query returning the matrix. Can you please outline the new query and remind me why we prefer the new version?} \costas{The query is shown in figure \ref{figure:running-example:main-highcharts-template}, I'm just avoiding the join because it just complicates things without good reason. We might have to change this again once we decide how we interact with the back-end} A template instance uses both JSON \linemaintemplateinstance{JSON} and HTML \linemaintemplateinstance{HTML} to represent the data of JavaScript visualizations. When a template instance is refreshed, visualizations within the browser are refreshed accordingly. User input within the browser is also propagated from the browser to the template instance before the next event fires.
+
+%For example, when the user changes the threshold with the slider: (1) the template instance is updated with the new threshold value \linemaintemplateinstance{slider value}, (2) the change event of the slider invokes the \texttt{main()} action, (3) the action enqueues \texttt{main.template} to be displayed, and the action-template cycle continues.
+
+%Section~\ref{section:data-model} presents the data model of the VDB, and its variables, expressions and queries. Section~\ref{section:templates} presents the syntax and semantics of the template language. Section~\ref{section:actions} presents the language used to specify actions.
+
+
+\eat{
+
+Formally, a VDB specifies a set of \textit{variables}, where each variable is either a \textit{base variable} or a \textit{derived variable} (or \textit{view}). Within a VDB instance, a base variable instance is incrementally updated (e.g. using insert/update/delete commands), whereas a view specifies a side-effect free function (or \textit{VDB query}) that inputs the VDB instance and refreshes its view instances in entirety. A template is a view that has two key extensions for visualizations: (1) A template instance is a data abstraction of HTML and JavaScript components displayed within the browser. When a template instance is refreshed, visualizations within the browser are refreshed correspondingly. (2) A template is an updateable view. User input within the browser (such as a textbox's value and a dropdown's selection) are propagated from the browser to the template instance, and finally to one or more base variable instances. An action specifies a procedure that can update base variable instances, as well as refresh view instances. The procedure can also cause side-effects in external systems, such as charging a credit card through web services. Typically, the last step of the procedure enqueues a template to be refreshed.
+
+During runtime, each page of the application executes in an \textit{action-template cycle}. Each action is bound to an \textit{event}, which captures both user interaction (e.g. the user has loaded a page, or clicked a button) and system-level activity (e.g. a time interval has elapsed, or an asynchronous call to a REST web service has returned). When an event bound to an action is fired: (1) any existing user input is propagated to the template instance and base variable instances (2) the action is invoked (3) the enqueued template is refreshed, and the cycle continues. For example, when the page of Figure~\ref{running-example:main.html} is initially loaded, there is no existing user input. Thus, the \texttt{onload} event invokes the \texttt{loadPage()} action (Figure~\ref{running-example:actions.js}), which simply displays \texttt{main.template}. When the user chooses a size in the dropdown (Figure~\ref{running-example:filter.template}), the \texttt{onchange} event fires, causing the selected size to be propagated into the base variable instance \texttt{size\_chosen}. Then, the \texttt{chooseSize()} action (Figure~\ref{running-example:actions.js}) is invoked, which calls a REST web service and enqueues \texttt{main.template} to be refreshed. Notice that the \texttt{logChosenSizeReturn()} action is provided as the \texttt{success} callback: the event for the asynchronous return of the REST call will invoke another action-template cycle.
+
+\yannis{Preview needed of the distribution of the VDB, plus section pointer. Where are the variables (i) fundamentally, for the semantics, (ii) in the described implementation. Necessary for explaining the query.}
+
+}

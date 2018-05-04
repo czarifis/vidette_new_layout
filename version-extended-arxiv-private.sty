@@ -1,0 +1,15 @@
+%------------------------------------------------------------------------------- 
+% Version
+%------------------------------------------------------------------------------- 
+
+% These macros are inlined by de-macro (used by arxiv-sanitize.sh), so that all
+% version text except \ifextended are stripped.
+% - de-macro requires file name to have "-private" suffix.
+% - de-macro requires macro definition to have at least one character.
+
+\newcommand{\ifextended}[1]{#1}
+\newcommand{\ifconference}[1]{ }
+\newcommand{\ifdraft}[1]{ }
+
+% Set an empty argument so that the "optional" package does not complain
+\newcommand{\setversiontextflags}{\def\UseOption{}}

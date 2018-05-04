@@ -1,0 +1,46 @@
+\section{Interactive Interface}
+\label{section:interactive-interface}
+
+
+
+As the notebook reader interacts with a visualization the underlying visual unit triggers actions that make the visualization react to the reader's input. For instance, as the user selects a particular region of the chart (shown in figure \costas{ADD FIGURE}) by dragging and dropping the mouse over that particular area, \eat{the visualization reacts to that event (or rather series of events) by zooming into the selected area}she causes the visualization to zoom into the selected area. This behavior is dictated by the underlying visual unit which listens for events (or rather series of events) and actively causes mutations to the visualization. Other than mutating the visual layer, these units also mutate the unit state. In this particular case, zooming into a region, causes the min and max attributes of the chart's visual state (shown in Figure \ref{figure:running-example:unit-body}, in lines 5-6) to mutate accordingly. If the template language contains variables bound to these parts of the unit instance, \projname\ propagates mutations to the respective variables. Furthermore, if these variables are used in other parts of the notebook, a change propagation algorithm identifies all the statements that depend on them and triggers their re-evaluation.
+
+
+
+
+For instance, the template shown in Figure \ref{figure:first-running-example:main-template} contains two variables, namely $min\_time$ and $max\_time$, which are bound to the $min$ and $max$ unit instance attributes respectively. These variables are later used in the parameterized query shown in Figure \ref{figure:running-example:age-group-data-retrieval} which retrieves information about the users that visited the website in the time-frame specified by $min\_time$ and $max\_time$, groups the result in age groups and sums up the visits made by each age group. Figure \ref{figure:running-example:age-group-query-result}, contains the result of that query. This result is assigned to variable $age\_groups$ which is then used to produce the bar chart appearing in Figure \costas{add Figure} (the template shown in Figure \ref{figure:running-example:age-group-template} shows the template that created that chart)
+
+
+\subsection{Internal Data Model \& Change Propagation Algorithm}
+\label{section:change-propagation-datamodel}
+
+In this subsection, we will define the propagation algorithm that triggers this interactive behavior. We will also define the internal data model used by both visual units and the propagation algorithm to describe mutations on \projname\ variables.
+
+\eat{Since, as explained above, \projname\ variables are represented using JSON, changes to either of them are represented as diffs.}
+\noindent{\bf Internal Data Model - Diffs} \\A \emph{diff} is the internal data model that is shared between visual units and the change propagation algorithm, this data model is hidden from data analysts and notebook readers. A diff that targets a JSON value is of the form $\diff{}{}{\pp{p}}$, where $\pp{p}$ is the path to the element that is being modified. \eat{The first token, $f$ of that path $\pp{p}$ denotes the variable that is being mutated; if the diff contains information about mutations on particular attributes or elements of the variable, then $f$ is followed by more tokens. Specifically, in order to describe a mutation on an individual attribute $k$ of a JSON value identified by path $p$ we use the notation $p.k$ and in order to describe the $i$-th element of the array targeted by a path $p$ we use the notation $p[k]$.}
+
+\subsection{Change Propagation Algorithm}
+\label{section:change-propagation-algorithm}
+
+Algorithm \ref{algo:change-propagation-algorithm} summarizes the change propagation module, that is triggered by visual units as a result of user interaction. The propagation algorithm takes as input a set of diffs produced by visual units, and invokes the reevaluation of all statements that depend on the targeted variables. Specifically, the algorithm iterates over each statement of each block that appears in the notebook (line 2) and checks :
+
+\begin{itemize}
+\item If the statement defines a new variable $x$ by using a $\gl{let}$ directive, then the algorithm visits every sub-expression of the let directive and checks if it is targeted by any diff in D. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+
+\item If the statement constructs a visualization using a visual unit of type U with body B, then the algorithm visits every sub-expression in body B and checks if it is targeted by any diff in D. If there is, the change propagation algorithm causes the reevaluation of the entire B and reinvokes the unit U with the unit instance r.
+
+and the expression of $\gl{let}$ contains at least one reporting directive (either a $\gl{for}$ or a $\gl{print}$), then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 2 if the statement defines a new variable $x$ by using a $\gl{let}$ directive, and the expression of $\gl{let}$ contains at least one for $\gl{for}$ the body of which contains some , then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 3
+
+\end{itemize}
+
+\eat{
+\begin{itemize}
+\item First, if the statement defines a new variable $x$ by using a $\gl{let}$ directive, and the expression of $\gl{let}$ contains at least one reporting directive (either a $\gl{for}$ or a $\gl{print}$), then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 2 if the statement defines a new variable $x$ by using a $\gl{let}$ directive, and the expression of $\gl{let}$ contains at least one for $\gl{for}$ the body of which contains some , then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 3
+
+\end{itemize}
+}
+\input{interactivity-algorithm}

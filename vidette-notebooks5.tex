@@ -1,0 +1,514 @@
+\section{\projname\ Notebooks}
+
+
+\projname\ notebooks support reactive behavior using a different approach. Instead of forcing analysts to provide logic that explicitly describes the side-effects (which typically include data access, processing and visualization steps) for each event that can take place, it allows them to implicitly describe them as a view-over-data. The advantage of this approach is that, when mutations occur at the underlying data (for instance, as a result of user interaction), the \projname\ engine can automatically infer which parts of the notebook code are affected and automatically cause their reevaluation. 
+
+In order to achieve this, \projname\ provides constructs, called \textbf{visual units}, that not only streamline the creation of visualizations given data, but most importantly they streamline the collection of user input from said visualizations. As readers interact with visualizations, the respective visual units cause mutations to the underlying data. Given such mutations \projname\ identifies the coding statements that depend on the mutated data and causes their reevaluation, thus automatically updating the state of (including the dependent computations and visualizations that appear on) the notebook. \projname\ also provides a domain specific \textbf{declarative template language}, which can be used for the invocation of system-provided functions that describe data access (namely, \textbf{source wrappers}) and invocation of reusable analyst-provided Python functions (that can describe an unbounded number of computations). This language can also describe schema conversions between visual units and source wrappers. When this template language is used, \projname\ can automatically identify the dependent expressions that could appear in subsequent coding blocks and causes their reevaluation. 
+
+
+
+
+\eat{
+In order to identify coding statements that depend on mutated variables, \projname\ uses a control flow analysis. However, since python is a dynamically-typed language, the employed analysis can often result in false positives, thus causing the reevaluation of statements that are not actually affected by mutations. In order to avoid unnecessary reevaluations, the data analyst can choose to explicitly define the dependent Python statements using annotations. Alternatively they can use a domain specific \textbf{declarative template language}, provided by \projname. When this template language is used, \projname\ can automatically identify the dependent expressions without false-positives. This template language can be used for the invocation of system-provided functions that describe data access (namely, \textbf{source wrappers}) and invocation of reusable Python functions (that can describe an unbounded number of computations). Also, the template language can describe schema conversions between visual units and source wrappers.
+}
+\eat{
+we types of modules that streamline data access and visualizations, namely: \textbf{source wrappers} and \textbf{visual units}. These modules, enable data access and visualization without requiring any imperative logic or individual API invocations. Additionally, \projname\ introduces a \textbf{declarative template language}, that facilitates schema conversions between visual units and source wrappers, as well as invocation of reusable Python functions (that can describe an unbounded number of computations). Lastly, templates interface with visual units to allow for data collection from user input. The collected variables can be used in subsequent parts of the notebook, thus describing parameterized queries, computations or visualizations. When mutations are observed by \projname\ in Python variables (either as a result of user interaction, or due to changes in underlying source), a change propagation algorithm, ensures the propagation of these mutations to all dependent parts of the notebook, thus adding a reactive element to notebooks. 
+}
+
+
+
+\subsubsection*{Source wrappers}
+
+
+\eat{
+Source wrappers allow the use of source specific languages for querying database systems (for instance SQL can be used to query MySQL and PostgreSQL databases, N1QL for Couchbase etc.). When using a \projname\ notebook, data analysts can directly issue queries from the notebook interface. This query is directed to the appropriate source wrapper, that evaluates it, propagates it to the respective data base system and returns the result in JSON format. This result is automatically assigned to a variable which can later be used in subsequent parts of the notebook (as will be described later in this section). Figure \ref{figure:first-running-example:data-retrieval} contains the first query of the analysis that retrieves the dataset required to plot the chart shown in Figure \ref{figure:first-running-example:first-line-chart}. Specifically, it joins the two tables: $visitors$ and $page\_views$ on the id of the visitor, then groups the result on the $time$ attribute and runs a $count$ aggregate to count the visitors per unit of time. Lastly, it sorts the resulting dataset by time in ascending order and assigns the result into a \projname\ variable and assigns the result into a \projname\ variable. Once this query is evaluated it returns the dataset shown in Figure \ref{figure:running-example:query-result}. Notice that the result has been automatically converted into a JSON array by the respective source wrapper. 
+}
+
+Source wrappers allow the use of source specific languages for querying database systems (for instance SQL can be used to query MySQL and PostgreSQL databases, N1QL for Couchbase etc.,). When using a \projname\ notebook, data analysts can directly issue queries from the notebook interface. This query is directed to the appropriate source wrapper, that evaluates it, propagates it to the respective database system and assigns the result to a Python variable. This variable can later be used in subsequent parts of the notebook (as will be described later in this section). Figure \ref{figure:first-running-example:data-retrieval} contains the first query of the analysis that retrieves the dataset required to plot the chart shown in Figure \ref{figure:first-running-example:first-line-chart}. Specifically, the query joins the two tables: $visitors$ and $page\_views$ on the id of the visitor, then groups the result on the $time$ attribute and runs a $count$ aggregate to count the visitors per unit of time. Lastly, it sorts the resulting dataset by time in ascending order and assigns the result the $readings$ variable. Once the respective active function evaluates the query, it obtains and automatically parses the result into a Python array of dictionaries (used to maintain the tuples), as shown in Figure \ref{figure:running-example:query-result}. Note, that the analyst doesn't need to manually parse the results into python variables in order to use them in subsequent computations, this step is handled automatically by the respective source wrapper. 
+
+\yannis{aren't the configuration files virtually identical to those used by application servers in order to create virtual data sources? We spent too much space on it, turning the paper into manual. I'd like to cut and just point to the figure. Perhaps keep only the security and encryption aspect.} 
+
+\costas{Agreed. Should I remove the marked content?}
+
+\costas{Reviewer 1: You talk about the security configuration file including both credentials and table-level access control.  Why put access control there? Usually access control is enforced within a server; you are one of many clients. Your approach probably won't integrate properly with existing security frameworks in existing databases and other servers. More generally, you should learn about what it's like for client software to integrate with real-world security infrastructure -- a good place to start would be to connect to cloud-hosted data services in more than one cloud. This will ground you.}
+
+\costas{Yep we should get rid of it.}
+
+\subsubsection*{Visual Units}
+\eat{Once data analysts have obtained the data with the use of source wrappers, they can feed them into visual units in order to generate the respective visualizations. }Visual units are constructs capable of generating fully reactive visualizations, that take advantage of the advanced interactive capabilities of modern browsers. In the eyes of an analyst a visual unit is simply a black box that takes as input a value that describes the state of the visualization. This value is called \emph{unit instance}. The visual unit internally uses the unit instance to invoke the appropriate renderer calls that will generate the expected visualization, thus absolving the data analyst from having to perform these tasks manually. A particular instantiation of the unit  can be described as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the Python value corresponding to the unit instance. Figure \ref{figure:running-example:unit-body} shows the unit instance of type \texttt{highcharts}, that once added to a coding block generates the visualization shown in Figure \ref{figure:first-running-example:first-line-chart}. The unit instance describes all the information that will be displayed in the visualization (such as the type and title of the chart, the labels on the x axis and so on). Each visual unit, comes with a unit instance schema that describes the format of the unit instance. As the reader interacts with visualizations, they can trigger mutations in the unit instance. For example, if the reader selects a particular area of the chart generated by the unit instance shown in Figure \ref{figure:running-example:unit-body}, the min and max attributes (in lines 6-7) will be updated accordingly.
+
+
+
+\begin{figure*}
+\centering
+%
+%
+\begin{minipage}[c]{8cm}
+%
+\begin{minipage}[c]{8cm}
+\begin{code}
+\textbf{<\% let} visits = sql(
+   SELECT * FROM page_views pv join visitors v 
+   on pv.v_id = v.vid where time BETWEEN 
+   \directive{print}{min_time} and \directive{print}{max_time};
+\textbf{<\% let} age_groups = sql(
+   SELECT agegroup, count(*) AS total 
+   FROM (SELECT CASE
+    WHEN age BETWEEN 0 AND 9 THEN '0 to 9'
+    WHEN age BETWEEN 10 and 19 THEN '10 to 19'
+     ...
+    FROM  visits )
+   GROUP BY agegroup  
+   ORDER BY agegroup ASC \textbf{\%>};)
+\end{code}
+\vspace*{-0.2cm}
+\subcaption{Data retrieval}
+\label{figure:running-example:age-group-data-retrieval}
+\vspace*{0cm}
+\end{minipage}
+
+\begin{minipage}[c]{8cm}
+\begin{code}
+age_groups = [
+   \{age_group: '0 to 9', total: 12\}, 
+   \{age_group: '10 to 19', total: 67\},  ...]
+\end{code}
+\vspace*{-0.2cm}
+\subcaption{Query Result}
+\label{figure:running-example:age-group-query-result}
+\vspace*{-0cm}
+\end{minipage}
+
+
+\begin{minipage}[c]{8cm}
+\begin{code}
+def predict_revenue(input):
+  y_pred = LinearRegression.predict(input)
+  return sum(y_pred)
+  
+def sum_revenue(input_list):
+  return sum(item['revenue'] for item in input_list)
+\end{code}
+\vspace*{-0.2cm}
+\subcaption{Python functions predicting and summing actual revenue}
+\label{figure:python-function-predicting-revenue}
+\vspace*{-0cm}
+\end{minipage}
+\eat{
+\begin{minipage}[c]{8cm}
+	\begin{code}
+def sum_revenue(input_list):
+  return sum(item['revenue'] for item in input_list)
+	\end{code}
+	\vspace*{-0.2cm}
+	\subcaption{Python function summing actual revenue}
+	\label{figure:python-function-summing-revenue}
+	\vspace*{-0.2cm}
+\end{minipage}
+}
+%
+\end{minipage}
+\hspace{1cm}
+\begin{minipage}[c]{6cm}
+
+\begin{minipage}[c]{7cm}
+\begin{code}
+  \directive{unit}{highcharts}
+  \{
+    title: 'Visitor information',
+    type: 'bar',
+    xAxis : \{ 
+      labels : [
+        \directive{for}{v \textbf{in} age_groups} 
+          \directive{print}{v.age_group} 
+        \directive{end for}{}]
+    \}
+    series: [\{
+      data: [ \directive{for}{v \textbf{in} age_groups}
+          \{
+            y  : \directive{print}{v.total}
+          \}
+        \directive{end for}{} ]
+    \}]
+  \}
+  \directive{end unit}{}
+\end{code}
+\vspace*{-0.2cm}
+\subcaption{Template generating unit state of second chart}
+\vspace*{0cm}
+\label{figure:running-example:age-group-template}
+
+
+\end{minipage}
+\begin{minipage}[c]{7cm}
+\begin{code}
+\directive{unit}{highcharts}
+\{title: 'Predicted and Actual revenue',
+  ...
+  data: [ 
+    \{y : \directive{print}{predict_revenue(visits)} \}
+    \{y : \directive{print}{sum_revenue(visits)} \}
+  ]...\}
+\end{code}
+\vspace*{-0.2cm}
+\subcaption{Actual and Predictive revenue visualization}
+\vspace*{0cm}
+\label{figure:running-example:actual-and-predicted-revenue}
+\end{minipage}
+\end{minipage}
+\vspace*{-0.05cm}
+\caption{Declaration of "reactive" parameterized view, data visualization specifications and Python function declaration and invocation}
+\vspace*{-0.3cm}
+\end{figure*}
+
+\subsubsection*{Templates}
+\label{section:template}
+
+
+\eat{
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{template}             & \gp   & \gl{<\% template} \gn{template\_name} (\gn{param\_list}) \gl{\%>}                    \\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{unit}
+\\
+    &                           &       & \gl{<\% end template \%>}                                         \\
+ 2  & \gn{param\_list}			& \gp   & ( \gn{var\_name} (, \gn{var\_name})* )? 
+\\ \hline
+ 3  & \gn{unit}         & \gp   & \gl{<\% unit} \gn{unit\_class} \gl{\%>}               \\
+    &                           &       & ~~ \gn{value}                                         \\
+    &                           &       & \gl{<\% end unit \%>}                                 \\
+ 4  & \gn{value}                & \gp   & \gn{jsonpp\_value} %\text{(see Figure~\ref{figure:bnf-value})} 
+\\
+ 5  &                           & \gd   & \gn{unit}                                     
+\\
+ 6  &                           & \gd   & \gn{print}                                                        \\
+ 7  &                           & \gd   & \gl{[} \gn{for} \gl{]}                                                                                \\
+ 8  &                           & \gd   & \gl{<} \gn{for} \gl{>}                                                                                \\
+ 9  &                           & \gd   & \gn{if}                                                                                 \\
+  
+ 10  &                           & \gd   & \gn{bind}                                                         \\
+11  &                           & \gd   & \gl{\{} \gn{event}*                                               \\
+    &                           &       & ~~ (\gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value}                                              \\
+    &                           &       & ~~ (\gl{,} \gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value})* )? \gl{\}}                                           \\ \hline
+12  & \gn{let}                 & \gp   & \gl{<\% let} \gn{var\_name} \gl{=} \gn{expr} \gl{\%>}            
+\\
+13  & \gn{print}                & \gp   & \gl{<\% print} \gn{expr} \gl{\%>}                                 \\
+14  & \gn{for}                  & \gp   & \gl{<\% for} \gn{var\_name} \gl{in} \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{value}
+\\
+    &                           &       & \gl{<\% end for \%>}                                              \\
+    
+14  & \gn{if}                  & \gp   & \gl{<\% if}  \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{value}
+\\
+ &                           &       & ~~ (\gl{<\% elif}  \gn{expr} \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})*    
+ \\
+ &                           &       & ~~ (\gl{<\% else}  \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})?    
+\\
+    &                           &       & \gl{<\% end if \%>}                                              \\
+15  & \gn{bind}                 & \gp   & \gl{<\% bind} \gn{var\_name} = \gn{expr} \gl{\%>}                             \\
+16  & \gn{event}                & \gp   & \gl{<\% event} \gn{event\_name} \gn{action\_name} \gl{\%>}        \\
+17  & \gn{expr}                 & \gp   & \gn{js\_expression}                                               \\
+18  &                           & \gd   & \gn{source\_expression}                                                   \\
+19  &                           & \gd   & \gn{json\_path}                                                   \\
+\hline
+\end{tabular}
+\caption{BNF Grammar for Templates}
+\label{figure:bnf-template}
+\end{figure}
+}
+
+
+Despite the fact that both source wrappers and visual units use Python variables, data scientists often need to perform additional computation or schema transformations. In order to facilitate this process, without requiring the use of imperative logic, \projname\ provides a declarative template language that operates on Python variables. ViDeTTe's template language utilizes the syntax of FORWARD \cite{SIGMOD2010, CIDR2011}, which, in turn, is similar to many prior template languages. However, the semantics are different and tuned for notebooks. See Section~\ref{section:related-work} for a comparison. \eat{Note, that analysts are not forced to use this language, if they don't wish to, they can simply manually construct the same Python variables (using Python code) and invoke the appropriate visual units or source wrappers by providing the variables as arguments. }The template language supports a set of \emph{template directives}, all of which operate on Python variables and simplify the task of creating nested data. Due to lack of space we do not include a formal definition of the grammar, instead we simply describe each of them in detail and provide a concrete example that illustrates their use. 
+
+
+
+
+\noindent {\bf Defining variables.} A template may define variables that are added to the notebook's environment so that they can be used in subsequent statements.  The $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ directive defines variable (view) $x$ and assigns to it the result of the expression $E$. $E$ can denote four types of expressions: (a) path navigation on nested Python variables, (b) invocation of a Python functions, (c) another subexpression containing directives that report data (defined in the next subsection) which generate nested values or (d) the invocation of a source wrapper.  Note that the \gl{let} directive, essentially, describes a view $x$ over the expression $E$, this means that when mutations occur to variables that $E$ depends on, \projname\ will automatically cause the reevaluation of $x$.  For instance, the template shown in Figure \ref{figure:first-running-example:data-retrieval} employs a \gl{let} directive to create a view-variable \texttt{readings} containing the visitor information that will be displayed in the chart (retrieved from a relational DBMS through an sql source wrapper). In some cases, however, the analyst may wish to simply initializes a variable during the first evaluation of the template. For instance, the lines 1-2 of the template shown in Figure \ref{figure:first-running-example:main-template}, initialize, the variables $min\_time$ and $max\_time$, which will be used in subsequent computation (as we will describe later in this section).
+
+\yannis{I stopped here}
+
+\noindent {\bf Reporting data.} Value assignments and iterations over collections are specified by using the \gl{print} and \gl{for} directives. The $\gl{<\%print } E \gl{\%>}$ directive evaluates the expression $E$ and returns the result, while the $\gl{<\%for } x \gl{ in } E \gl{\%> } B \gl{ <\%end for\%>}$ directive specifies that variable $x$ iterates over the result of $E$ and, in each iteration, it instantiates the body $B$ of the \gl{for} loop. Specifically, in Figure \ref{figure:first-running-example:main-template}, in lines 8-10 and 15-19 a \gl{for} directive is used to iterate over the readings retrieved from the database and for each reading, it generates a new value, with the use of the \gl{print} directive. Particularly, in line 9 the template generates a string (the time label), which is added to the labels array (which contains the labels that will appear on the x axis of the chart). In lines 15-19 it generates a Python dictionary of the form \{y: ...\} and adds it to the data array. The data array in highcharts contains the points that will appear in the chart. 
+
+
+\noindent {\bf Invoking Python Functions.} A template can also describe the invocation of Python functions, thus allowing any arbitrary computation. For instance, the snippet shown in Figure \ref{figure:running-example:actual-and-predicted-revenue} (which generates the bar-chart illustrating the predicted and actual revenue) in lines 5 and 6 invokes two functions: the $predict\_revenue()$ and $sum\_revenue()$ using the \gl{print} directive while providing as input an array of dictionaries that is initialized in Figure \ref{figure:running-example:age-group-data-retrieval}; function $predict\_revenue()$ (shown in \ref{figure:python-function-predicting-revenue}), inputs the array into a trained linear regression model and returns the revenue prediction, while function $sum\_revenue()$ (in the same Figure), simply computes the actual revenue.
+
+
+\eat{
+\noindent {\bf Collecting data.} In addition to specifying how to compute a template instance, the template's \gl{bind} directive allows the analyst to specify user input collection. Specifically, the $\gl{<\% bind x} \gl{ \%>}$ directive describes a two-way bind that will be created between the part of the unit instance appearing on its left side and to variable $x$. For instance, in Figure \ref{figure:first-running-example:main-template} in lines 10-11 we create a two-way binding between the min and max boundaries of the chart and the min and max values of the time labels that have been retrieved (namely min\_time and max\_time). While the user interacts with chart he can select a particular region in the chart which in turn updates the values $min\_time$ and $max\_time$. This event invokes an internal propagation algorithm (which will be described in the next section) which triggers the revaluation of the \projname\ statements that use the values $min\_time$ and $max\_time$ in other parts of the notebook.
+}
+
+
+
+
+
+\noindent {\bf Collecting data.} The template's \gl{bind} directive allows the analyst to specify user input collection. Specifically, the $\gl{<\% bind x} \gl{ \%>}$ directive describes a two-way binding between the part of the unit instance appearing on the left side of the directive and the variable $x$. Once the reader interacts with the generated visualization and causes mutations to the underlying unit instance, these mutations will be propagated to the respective bound variables. For instance, in Figure \ref{figure:first-running-example:main-template} in lines 11-12 we create a two-way binding between the min and max boundaries of the chart and the min and max values (namely min\_time and max\_time) (defined in lines 1-2 of Figure \ref{figure:first-running-example:main-template}). As the reader interacts with the generated chart she can select a particular time frame by dragging and dropping the mouse over a region. This action updates the min and max attributes of the unit instance which in turn updates the values $min\_time$ and $max\_time$. 
+
+\eat{
+This event invokes an internal propagation algorithm (which will be described in the next section)  triggers the revaluation of the \projname\ statements that use the values $min\_time$ and $max\_time$ in other parts of the notebook.
+
+For instance, the template shown in Figure \ref{figure:first-running-example:main-template} contains two variables, namely $min\_time$ and $max\_time$, which are bound to the $min$ and $max$ unit instance attributes respectively. These variables are later used in the parameterized query shown in Figure \ref{figure:running-example:age-group-data-retrieval} which retrieves information about the users that visited the website in the time-frame specified by $min\_time$ and $max\_time$, groups the result in age groups and sums up the visits made by each age group. Figure \ref{figure:running-example:age-group-query-result}, contains the result of that query. This result is assigned to variable $age\_groups$ which is then used to produce the bar chart appearing in Figure \costas{add Figure} (the template shown in Figure \ref{figure:running-example:age-group-template} shows the template that created that chart)
+}
+\subsubsection*{Reflecting changes to subsequent views}
+\label{section:change-propagation-datamodel}
+
+
+\eat{
+\begin{algorithm}[t!]
+    \SetKwProg{Function}{function}{}{}
+    \SetKwFunction{changepropagation}{change-propagation}
+    \SetKwFunction{IVMPath}{IVMPath}
+    \SetKwFunction{prefixDiffs}{prefixDiffs}
+    \SetKwFunction{navigate}{navigate}
+    \SetKwFunction{keysWithin}{keysWithin}
+    \SetKwFunction{instantiateTemplate}{instantiateTemplate}
+    \SetKwFunction{instantiateVmPayload}{instantiateVmPayload}
+    \SetKwFunction{instantiateForLoopVmPayload}{instantiateForLoopVmPayload}
+    \Function{\changepropagation{Notebook $N$, Environment $env$, Set of Input Diffs $D$}}{
+    	\For {\textbf{each} statement s in each coding snippet of N}{
+	    		 \uIf  {s is $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ } {
+	    		  \uIf  {There is $\Delta^{}(t) \in D$ with $t$ that targets any subexpression of E} {
+	    		    Reevaluate $E$ and assign result $r$ to $x$\;
+	    		    Update $env$ with new value of $x$\;
+	    		    Construct $\Delta^{}(x)$ and add it to D\;
+	    		 }
+    		 }
+			 \uElseIf  {s is $\gl{<\%unit } U \gl{\%> } B \gl{ <\%end unit\%>}$ } {
+			 	\uIf  {There is $\Delta^{}(t) \in D$ with $t$ that that targets any subexpression of B} {
+			  		Reevaluate $B$ and invoke unit U with result $r$ \;
+			 	}
+             }  
+             \eat{\uElseIf  {s is Python statement } {
+             	\uIf  {There is $\Delta^{}(t) \in D$ with $t$ that that targets any subexpression of s} {
+             		\uIf  {s is an assignment $x$\ = $E$} {	
+             		 Reevaluate $E$ and assign result to $x$\;
+             		 Update $env$ with new value of $x$\;
+             		 Construct $\Delta^{}(x)$ and add it to D\;
+             		}
+             		\uElse{
+             		 Reevaluate $s$ \;
+             		}
+             	}
+             }    
+           } 
+        }
+        
+    }
+\caption{Change Propagation Algorithm}
+
+\label{algo:change-propagation-algorithm2}
+\vspace*{-0.2cm}
+\end{algorithm} 
+
+}
+Once a set of variables is mutated by a visual unit as a result of reader interaction,\eat{ or by a source wrapper as a result of a push-event from an underlying database (in cases when the analyst visualizes live data),} \projname\ is responsible for reflecting these changes to all other parts of the notebook that depend on those variables. For instance, in Figure \ref{figure:running-example:age-group-data-retrieval} we show a parameterized query that obtains all users that visited the website in the time-frame specified by $min\_time$ and $max\_time$, categorizes them into age groups and lastly counts the users that correspond to each age group. The result of this query is assigned to the view-variable $age\_groups$ (Figure \ref{figure:running-example:age-group-query-result} shows the contents of this variable). The variable $age\_groups$ is then used in the template shown in Figure \ref{figure:running-example:age-group-template} (lines 7-9 and 12-16) to produce the bar chart appearing in Figure \ref{figure:first-running-example:first-bar-chart}. In this scenario, if the reader's interaction with the chart shown in Figure \ref{figure:first-running-example:first-line-chart}, caused the mutation of variables $min\_time$ and $max\_time$ (note that the values $min\_time$ and $max\_time$ where collected by the visual unit shown in Figure \ref{figure:first-running-example:main-template}, lines 9 and 10), then \projname\ must trigger a chain reaction that causes the reevaluation of both the query and the following visualization in order to reflect the changes. 
+
+
+
+
+\eat{
+\noindent{\bf Representing mutations through Diffs.} Once a variable is mutated, the respective visual unit or source wrapper produces a diff that describes this mutation. A \emph{diff} is the internal data model that is shared between source wrappers, visual units and the change propagation algorithm, this data model is hidden from data analysts and notebook readers. A diff that targets a nested value is of the form $\diff{}{}{\pp{p}}$, where $\pp{p}$ is the path to the value that is being modified. 
+
+
+
+\noindent{\bf Change Propagation Algorithm.}\\
+Once a diff is generated for each mutated variable \projname\ invokes the change propagation algorithm, shown in \ref{algo:change-propagation-algorithm2}. The algorithm takes as input a set of diffs, and only invokes the reevaluation of statements that depend on the targeted variables. Specifically, it iterates over each statement of each coding block that appears in the notebook (as shown in line 2) and performs the following checks:
+
+\begin{compactitem}
+
+\item If the statement defines a new variable $x$ (line 3), then the algorithm visits every sub-expression of the \gl{let} directive and checks if it is targeted by any diff in D (line 4). If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement (line 5), updates the notebook environment with the new value of x (line 6) and lastly constructs a new diff that describes the mutation to the variable x (line 7). Note that the Expression shown in Figure \ref{figure:running-example:age-group-query-result} is an SQL statement that contains subexpressions (parameters), so given a diff of type: $\diff{}{}{\pp{min\_time}}$ (which could be created as the reader interacts with the chart), the propagation engine identifies that there is a subexpression targetted by that diff thus causing the reevaluation of the source wrapper, resulting in additional data. 
+
+\item If the statement constructs a visualization using a visual unit of type U with body B (line 8), then the algorithm visits every sub-expression in body B and checks if it is targeted by any diff in D (line 9). If there is, the change propagation algorithm causes the reevaluation of the entire body B, thus generating the unit instance r and then reinvokes the unit U with new unit instance (line 10).
+\eat{\item If the statement is a typical Python expression, the algorithm checks if there is a diff that matches any subexpression of it. If there is such a diff and this statement is an assignment, then the expression is evaluated in full, the environment is updated accordingly and a diff that targets the target of the assignment is created, in all other cases the statement is simply reevaluated.
+}
+
+\costas{reviewer 1: I like the idea of a generic "diff" API for reactivity. I'm not sure it's new, so you should establish that and/or cite others. But I like it.}
+
+
+\costas{reviewer 3: There are some papers about result reuse and incremental view maintenance, esp for  interaction-aware changes (ftp://ftp10.us.freebsd.org/users/azhang/disc/disc01/cd1/out/papers/sigmod/howtorollajoinakeker.pdf , https://www.semanticscholar.org/paper/Interactive-Tweaking-of-Text-Analytics-Dashboards-Nandi-Huang/7cba225e13ddbf1b917397d5d6855083296c5ca7 ) which can lead to a list of optimizations that can be applied at the change propagation step. Articulating these would allow this work to be extensible as well.}
+
+\costas{We should cite id-IVM and other related work}
+
+\costas{reviewer 1: I do not know how you propose to do Line 12 of Algorithm 1, which seems to require parsing Python deeply and handling issues of dataflow analysis and variable aliasing. Convince the reader you can do that or identify what the limitations are.}
+
+\costas{In it's simplest form this is just a grep. I spent sometime looking into data flow analysis, pointer analysis, alias analysis, but I haven't yet found an algorithm/tool that does this.}
+
+
+\end{compactitem}
+}
+
+\eat{
+
+\begin{figure*}
+\centering
+%
+%
+\begin{minipage}[c]{7.5cm}
+%
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+\textbf{<\% let} age_groups = 
+   SELECT agegroup, count(*) AS total 
+   FROM (SELECT CASE
+    WHEN age BETWEEN 0 AND 9 THEN '0 to 9'
+    WHEN age BETWEEN 10 and 19 THEN '10 to 19'
+     ...
+    FROM (SELECT * FROM page_views pv join visitors v 
+          on pv.v_id = v.vid where time BETWEEN 
+          \directive{print}{min_time} and 
+          \directive{print}{max_time}) joined_data) jd
+   GROUP BY agegroup  
+   ORDER BY agegroup ASC \textbf{\%>}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Data retrieval}
+\label{figure:running-example:age-group-data-retrieval}
+\vspace*{0cm}
+\end{minipage}
+
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+age_groups = [
+   \{age_group: '0 to 9', total: 12\}, 
+   \{age_group: '10 to 19', total: 67\},
+   \{age_group: '20 to 29', total: 84\},  ...]
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Query Result}
+\label{figure:running-example:age-group-query-result}
+\vspace*{-0.2cm}
+\end{minipage}
+%
+\end{minipage}
+\hspace{1cm}
+\begin{minipage}[c]{6cm}
+
+\begin{minipage}[c]{8.5cm}
+\begin{code}
+  \directive{unit}{highcharts}
+  \{
+    title: 'Visitor information',
+    xAxis : \{ 
+      labels : [
+        \directive{for}{v \textbf{in} age_groups} 
+          \directive{print}{v.age_group} 
+        \directive{end for}{}]
+    \}
+    series: [\{
+      data: [ \directive{for}{v \textbf{in} age_groups}
+          \{
+            y  : \directive{print}{v.total}
+          \}
+        \directive{end for}{} ]
+    \}]
+  \}
+  \directive{end unit}{}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Template \texttt{temp\_view}}
+\vspace*{0cm}
+\label{figure:running-example:age-group-template}
+\end{minipage}
+\end{minipage}
+\vspace*{-0.05cm}
+\caption{Template, template instance, and UAS configuration file for the running example}
+\vspace*{-0.3cm}
+\end{figure*}
+}
+\eat{
+\begin{itemize}
+\item First, if the statement defines a new variable $x$ by using a $\gl{let}$ directive, and the expression of $\gl{let}$ contains at least one reporting directive (either a $\gl{for}$ or a $\gl{print}$), then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 2 if the statement defines a new variable $x$ by using a $\gl{let}$ directive, and the expression of $\gl{let}$ contains at least one for $\gl{for}$ the body of which contains some , then the algorithm checks whether there is a diff that targets any of the expressions of the reporting directives. If there is, the change propagation algorithm causes the reevaluation of the $\gl{let}$ statement, updates the notebook environment with the new value of x and constructs a new diff that targets x
+\item 3
+
+\end{itemize}
+}
+\eat{
+
+This template language allows the invocation of functions. Regardless of whether these functions are defined by users or by third-party packages they must operate on the JSON data model, in order to be used in a template.
+
+Source wrappers produce and visual units consume JSON. Since both these constructs use the JSON data model, no data model transformations are required by the analyst. This minimizes the amount of plumbing code required for generating an analysis. For cases when the data analyst wishes to perform some additional computation or perform data transformations, \projname\ also supports a declarative template language that operates on JSON data. This template language also allows the invocation of functions. Regardless of whether these functions are defined by users or by third-party packages they must operate on the JSON data model, in order to be used in a template.
+
+\emph{Templates} are declarative specifications that can be used to generate \projname\ variables or unit instances. The template language supports a set of \emph{template directives}, all of which operate on the JSON datamodel. These directives are used to describe computation, define variables and set up data collection. Due to lack of space we do not include a figure containing a formal BNF grammar for the template language, instead we simply describe each of them in detail and provide a concrete example that illustrates their use. 
+
+
+
+
+\noindent {\bf Defining variables.} A template may define variables that are added to the notebook's environment so that they can be used in subsequent computation. The $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ directive defines variable $x$ and assigns to it the result of the expression $E$. $E$ can denote three types of expressions: path navigation on JSON data, invocation of a python function that performs computation by using as input and output JSON values or a source-specific language (such as a SQL query). For instance, the template shown in Figure \ref{figure:first-running-example:data-retrieval} employs a \gl{let} directive to create a variable \texttt{readings} containing the visitor information that will be displayed in the chart (retrieved from a relational DBMS through an SQL query).
+
+\noindent {\bf Reporting data.} Value assignments and iterations over collections are specified by using the \gl{print} and \gl{for} directives. The $\gl{<\% print } E \gl{ \%>}$ directive evaluates the expression $E$ and returns the result, while the $\gl{<\% for } x \gl{ in } E \gl{ \%> } B \gl{ <\% end for \%>}$ directive specifies that variable $x$ iterates over the result of $E$ and, in each iteration, it instanciates the body $B$ of the \gl{for} loop. In Figure \ref{figure:first-running-example:main-template}, in lines 7-9 and 14-18 a \gl{for} directive is used to iterate over the readings retrieved from the database and for each reading, it generates a new JSON value, with the use of the \gl{print} directive. Particularly, in line 8 the template generates a string (the time label), which is added to the labels array (which contains the labels that will appear on the x axis of the chart). In lines 15-17 it generates a JSON object of the form \{y: ...\} and adds it to the data array. The data array in highcharts contains the points that will appear in the chart.
+
+\noindent {\bf Collecting data.} In addition to specifying how to compute a template instance, the template's \gl{bind} directive allows the analyst to specify user input collection. Specifically, the $\gl{<\% bind x} \gl{ \%>}$ directive describes a two-way bind that will be created between the part of the unit instance appearing on its left side and to variable $x$. For instance, in Figure \ref{figure:first-running-example:main-template} in lines 10-11 we create a two-way binding between the min and max boundaries of the chart and the min and max values of the time labels that have been retrieved (namely min\_time and max\_time). While the user interacts with chart he can select a particular region in the chart which in turn updates the values $min\_time$ and $max\_time$. This event invokes an internal propagation algorithm (which will be described in the next section) which triggers the revaluation of the \projname\ statements that use the values $min\_time$ and $max\_time$ in other parts of the notebook.
+
+
+
+that take as input JSON objects (in a predefined format) and generate visualizations on the notebook interface. By not requiring any low level imperative code for this task 
+
+\label{section:visual Units}
+
+\noindent To shield analysts from the low level coding required to generate visualizations, \projname\ abstracts out each visual component as a \projname\ \emph{visual unit} (or simply \emph{unit}). In the eyes of the analyst a visual unit is simply a black box that takes as input a JSON value that describes the visualization, namely, unit instance. The visual unit internally uses the unit instance to invoke the appropriate renderer calls that will generate the expected visualization. As such a particular instantiation of the unit  can be described as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. 
+
+
+For instance, Figure \ref{figure:running-example:unit-body} shows a unit instance of type \texttt{highcharts}. The unit instance describes all the information that will be displayed in the visualization (such as the title of the chart, the labels on the x axis and so on). Each visual unit, comes with a unit instance schema that describes the format of the unit instance.
+
+
+
+
+In order for source wrappers to connect to the respective database systems, the data analyst must provide a configuration file, describing the information required for establishing a connection with each source. Such configuration files are added by interacting directly with the notebook interface, therefore data analysts do not have to use a command line during setup. Once added, these files are hidden from the UI and encrypted thus diminishing any security concerns. Lastly, visual units are constructs that take as input JSON objects (in a predefined format) and generate visualizations on the notebook interface. 
+
+
+Source wrappers produce and visual units consume JSON. Since both these constructs use the JSON data model, no data model transformations are required by the analyst. This minimizes the amount of plumbing code required for generating an analysis. For cases when the data analyst wishes to perform some additional computation or perform data transformations, \projname\ also supports a declarative template language that operates on JSON data. This template language also allows the invocation of functions. Regardless of whether these functions are defined by users or by third-party packages they must operate on the JSON data model, in order to be used in a template.
+
+This language also allows data analysts tp describe reactive behavior. Specifically, by binding individual variables to certain parts of the visual unit, data analysts can collect information which can later be used in other parts of the notebook. By doing so, analysts can describe computation that depends on the reader's input. \projname's propagation algorithm, identifies statements that depend on such libraries and triggers their evaluation. This process leads to truly interactive notebooks, that react to the reader's input, thus enhancing the exploratory capabilities of traditional notebooks.
+}
+\eat{
+Source wrappers require the instantiation of a configuration file, that describes the information required for establishing a connection with each source. Such configuration files are added by data analysts by interacting directly with the notebook interface. Once added, these files are hidden from the UI and encrypted thus diminishing any security concerns. Lastly, visual units are constructs that take as input JSON objects (in a predefined format) and generate visualizations on the notebook interface. 
+
+
+Most importantly, source wrappers and visual units, both use the same data model JSON, so no data model transformations are required for retrieving and visualizing data. For cases when the data analyst wishes to perform some data transformations, \projname\ also supports a declarative template language.
+
+
+Once a source wrapper receives a query, it propagates it to the respective database system, and then parses and returns the result in JSON format. Source wrappers require the instantiation of a configuration file, that describes the information required for establishing a connection with each source. Such configuration files are added by data analysts by interacting directly with the notebook interface. Once added, these files are hidden from the UI and encrypted thus diminishing any security concerns. Lastly, visual units are constructs that take as input JSON objects (in a predefined format) and generate visualizations on the notebook interface. 
+
+Both source wrappers and visual units come pre-installed and can be used directly on the notebook without the installation of any additional packages. Additionally, since no method calls are required for accessing and visualizing data, the analyst does not have to read long documentation files before using them. Most importantly, source wrappers and visual units, both use the same data model JSON, so no data model transformations are required for retrieving and visualizing data. For cases when the data analyst wishes to perform some data transformations, \projname\ also supports a declarative template language.
+}
+
+\eat{
+interactive chart implementation using imperative languages is not a trivial task and possibly beyond the coding skill set of an average data analyst. Such a task requires advanced coding skills and implementation of event listeners to capture the user's mouse input and asynchronously trigger execution of other functions that will update data and re-draw the second figure. As we show later in Section ??, the {\projname} framework is equipped with modules that can take care of the heavy work, while the analyst only needs to define ``bound'' (linked) variables.
+
+
+Finally, 
+
+
+plot a line chart of access count Vs timestamp, as well as a bar chart of access count Vs age groups, and (c) be able to select a time range from the line chart using mouse input and automatically filter and display data in the second plot to present age-group-based activity within the selected time frame. 
+
+
+The data analyst can access historic data about the user base by directly querying the data base system. Table \ref{tab:schema} shows the database schema. The analyst's first task is to retrieve the data via database queries, join the two tables based on the visitor id (``vid'') key and group by (1) ``time'' and (2) ``age'' to prepare the data for the two plots.
+
+Installing packages, transferring data and connecting with database systems requires technical knowledge that often exceeds the skill-set of a typical data scientist. Lastly, while such notebooks support the generation of visualizations with the use of the appropriate library
+
+
+
+Throughout this paper, we present {\projname} via an example data analysis: We assume a scenario where a data analyst must (a) retrieve  website access information from a database, (b) plot a line chart of access count Vs timestamp, as well as a bar chart of access count Vs age groups, and (c) be able to select a time range from the line chart using mouse input and automatically filter and display data in the second plot to present age-group-based activity within the selected time frame. 
+
+For our walkthrough example, we assume a Jupyter server where the analysts develop their notebooks and a different database server where data is stored. Table \ref{tab:schema} shows how our databases are organized. The analyst's first task is to retrieve the data via database queries, join the two tables based on the visitor id (``vid'') key and group by (1) ``time'' and (2) ``age'' to prepare the data for the two plots.
+
+During the visualization stage, the analyst implements two ``linked'' plots in such a way that a range selection in the first plot \textit{automatically} (without re-executing code in the notebook) filters the data presented in the second plot. Figure \ref{fig:vision} illustrates the expected chart behavior. A time-frame selection in the first chart (10:00AM - 1:00PM) causes the second chart to only plot those accesses that occurred during the selected interval. 
+
+It is important to note that this interactive chart implementation using imperative languages is not a trivial task and possibly beyond the coding skill set of an average data analyst. Such a task requires advanced coding skills and implementation of event listeners to capture the user's mouse input and asynchronously trigger execution of other functions that will update data and re-draw the second figure. As we show later in Section ??, the {\projname} framework is equipped with modules that can take care of the heavy work, while the analyst only needs to define ``bound'' (linked) variables.
+}

@@ -1,0 +1,150 @@
+% Template and template instance figures
+\begin{figure*}
+\centering
+%
+\begin{minipage}[c]{8.5cm}
+\begin{code}
+\directive{template}{temp\_view()}
+  \directive{import}{functions}
+  \directive{import}{actions}
+
+  \textbf{<\% let} readings = select t.temp
+                    from db.temperature as t
+                    order by timestamp \textbf{\%>}
+  
+  \directive{unit}{highcharts}
+  \{\eat{
+    chart: \{
+      renderTo: 'container',
+      zoomType: 'x'
+    \},}
+    title: \{ text: 'Temperature monitor' \}, \eat{
+    plotOptions: \{
+      series: \{
+        turboThreshold: 5000000
+      \}
+    \},
+    subtitle: \{
+      text: 'Using the experimental Highcharts Boost module'
+    \},
+    tooltip: \{
+      valueDecimals: 1
+    \},}    
+    series: [\{
+      data: [
+        \directive{for}{reading \textbf{in} readings}
+          \{
+            y    : \directive{print}{reading.temp},
+            color: \directive{print}{toHex(reading.temp, threshold)}
+          \}
+        \directive{end for}{}
+      ],
+      lineWidth: 1
+    \}],
+    \gl{<\% event} onSelection redrawSelected() \gl{\%>}
+  \}
+  \directive{end unit}{}
+  
+  \directive{unit}{slider}
+  \{
+    min  : 0,
+    max  : 10000,
+    value: \directive{bind}{threshold = 65}
+  \}
+  \directive{end unit}{}
+\directive{end template}{}
+\end{code}
+\vspace*{-0.3cm}
+\subcaption{Template \texttt{temp\_view}}
+\vspace*{0.3cm}
+\label{figure:running-example:main-template}
+\end{minipage}
+%
+\hspace{1cm}
+%
+\begin{minipage}[c]{6cm}
+%
+\begin{minipage}[c]{6cm}
+\begin{code}
+\directive{unit}{highcharts}
+\{\eat{
+  chart: \{
+    renderTo: 'container',
+    zoomType: 'x'
+  \},}
+  title: \{ text: 'Temperature monitor' \},\eat{
+  plotOptions: \{
+    series: \{
+      turboThreshold: 5000000
+    \}
+  \},
+  subtitle: \{
+    text: 'Using the experimental Highcharts Boost module'
+  \},
+  tooltip: \{
+    valueDecimals: 1
+  \},}    
+  series: [\{
+    data: [
+        \{ y: 55, color: '#359435' \},
+        \{ y: 57, color: '#359823' \},
+        \{ y: 56, color: '#359533' \},
+        \{ y: 53, color: '#359220' \}
+    ],
+    lineWidth: 1
+  \}]
+\}
+\directive{end unit}{}
+
+\directive{unit}{slider}
+\{
+  min : 0,
+  max : 10000,
+  value: 65
+\}
+\directive{end unit}{}
+\end{code}
+\vspace*{-0.3cm}
+\subcaption{Template instance}
+\label{figure:running-example:main-template-instance}
+\vspace*{0.3cm}
+\end{minipage}
+\begin{minipage}[c]{6cm}
+\begin{code}
+   sources : [ \{ 
+     driver   : "postgres", 
+     host     : "localhost", 
+     port     : 5432, 
+     aliases  : [\{db : "sensorDb"\}]
+     username : "dbadmin" 
+   \}] 
+\end{code}
+\subcaption{UAS configuration file}
+\label{figure:uas-config-file}
+\end{minipage}
+
+
+%
+\end{minipage}
+\caption{Template, template instance, and UAS configuration file for the running example}
+\end{figure*}
+
+% Lines of different concepts in the template and template instances
+\newcommand{\templateinstanceline}[1]{%
+    \IfEqCase*{#1}{%
+    {highcharts-unit-instance}{lines~1-14}%
+    {slider-unit-instance}{lines~16-22}%
+    }[\errmessage{Unable to ref #1 for template instance}]%
+}%
+
+\newcommand{\templateline}[1]{%
+    \IfEqCase*{#1}{%
+    {highcharts-unit}{lines~9-24}%
+    {slider-unit}{lines~26-32}%    
+    {print-y}{line~16}%
+    {print-color}{line~17}%
+    {for}{lines~14-19}%
+    {let}{lines~6-8}%
+    {bind}{line~30}%
+    }[\errmessage{Unable to ref #1 for template}]%
+}%

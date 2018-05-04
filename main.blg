@@ -1,0 +1,59 @@
+This is BibTeX, Version 0.99d (TeX Live 2016/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: abbrv.bst
+Database file #1: refs.bib
+Warning--entry type for "plotly" isn't style-file defined
+--line 42 of file refs.bib
+Warning--entry type for "ipyvega" isn't style-file defined
+--line 44 of file refs.bib
+Warning--entry type for "Altair" isn't style-file defined
+--line 46 of file refs.bib
+A bad cross reference---entry "DBLP:conf/icde/LiarouI14"
+refers to entry "DBLP:conf/icde/2014", which doesn't exist
+Warning--I didn't find a database entry for "DBLP:conf/icde/2014"
+Warning--to sort, need author or key in ipyvega
+Warning--to sort, need author or key in Altair
+Warning--can't use both volume and number fields in livny1997devise
+You've used 25 entries,
+            2118 wiz_defined-function locations,
+            633 strings with 8040 characters,
+and the built_in function-call counts, 8830 in all, are:
+= -- 854
+> -- 454
+< -- 6
++ -- 186
+- -- 158
+* -- 633
+:= -- 1386
+add.period$ -- 69
+call.type$ -- 25
+change.case$ -- 155
+chr.to.int$ -- 0
+cite$ -- 28
+duplicate$ -- 311
+empty$ -- 690
+format.name$ -- 158
+if$ -- 1869
+int.to.chr$ -- 0
+int.to.str$ -- 25
+missing$ -- 19
+newline$ -- 118
+num.names$ -- 38
+pop$ -- 192
+preamble$ -- 1
+purify$ -- 133
+quote$ -- 0
+skip$ -- 252
+stack$ -- 0
+substring$ -- 536
+swap$ -- 82
+text.length$ -- 6
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 96
+warning$ -- 3
+while$ -- 69
+width$ -- 27
+write$ -- 251
+(There was 1 error message)

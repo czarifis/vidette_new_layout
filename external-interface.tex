@@ -1,0 +1,231 @@
+\section{\projname\ Notebook Interface}
+\label{section:programming-model}
+
+In this section we present the interface of \projname\ notebooks as seen by a data analyst. The internal execution of the \projname\ engine, along with the automatically applied optimizations, is the topic of Section \ref{section:architecture}.  \\ 
+
+
+\subsection{Data Retrieval}
+\label{section:dataretrieval}
+
+% Template and template instance figures
+\begin{figure*}
+\centering
+%
+%
+\begin{minipage}[c]{6cm}
+\begin{minipage}[c]{6cm}
+\begin{code}
+   sources : [ \{ 
+     driver   : "postgres", 
+     host     : "edu.db.domain", 
+     expose   : [ \{
+      schema : 'website_info', 
+      tables: [visits, page_views] \} ]
+     port     : 5432, 
+     username : "dbadmin" 
+     password : 'myP@ss'
+   \}] 
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{DB Access Configuration file}
+\vspace*{0.3cm}
+\label{figure:source-config-file}
+\end{minipage}
+%
+\begin{minipage}[c]{6cm}
+\begin{code}
+\textbf{<\% let} readings = 
+   SELECT count(time) as visits, time
+   FROM (SELECT * FROM page_views pv 
+  	     join visitors v 
+         on pv.v_id = v.vid) AS joined_table
+   GROUP BY time 
+   ORDER BY time ASC \textbf{\%>}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Data retrieval}
+\label{figure:first-running-example:data-retrieval}
+\vspace*{0.3cm}
+\end{minipage}
+
+\begin{minipage}[c]{6cm}
+\begin{code}
+readings = [
+   \{visits: 15, time: '08:00'\}, 
+   \{visits: 10, time: '09:00'\},
+   \{visits: 25, time: '10:00'\},  ...]
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Query Result}
+\label{figure:running-example:query-result}
+\vspace*{0.3cm}
+\end{minipage}
+%
+\vspace*{0.6cm}
+\end{minipage}
+\hspace{2cm}
+\begin{minipage}[c]{6cm}
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+  \directive{unit}{highcharts} \{
+    title: 'Visitor information' ,
+    type: 'line',
+    xAxis : \{ 
+      labels : ['08:00','09:00'...],
+      min : '08:00'
+      max : '22:00'
+    \}
+    series: [\{ data: [ \{y:15\}, \{y:10\}...] \}]
+  \} \directive{end unit}{}
+\end{code}
+\vspace*{-0.4cm}
+\subcaption{Unit with evaluated unit state}
+\vspace*{0.3cm}
+\label{figure:running-example:unit-body}
+\end{minipage}
+\begin{minipage}[c]{7.5cm}
+\begin{code}
+  \directive{unit}{highcharts} \{
+    title: 'Visitor information',
+    type: 'line',
+    xAxis : \{ 
+      labels : [
+        \directive{for}{reading \textbf{in} readings} 
+          \directive{print}{reading.time} 
+        \directive{end for}{}],
+      min : \directive{bind}{min_time},
+      max : \directive{bind}{max_time}
+    \}
+    series: [\{
+      data: [ \directive{for}{reading \textbf{in} readings}
+          \{
+            y  : \directive{print}{reading.count}
+          \}
+        \directive{end for}{} ]
+    \}]
+  \} \directive{end unit}{}
+\end{code}
+\vspace*{-0.3cm}
+\subcaption{Template \texttt{temp\_view}}
+\vspace*{0cm}
+\label{figure:first-running-example:main-template}
+\end{minipage}
+\end{minipage}
+\vspace*{-0.3cm}
+\caption{Template, template instance, and UAS configuration file for the running example}
+\vspace*{-0.3cm}
+\end{figure*}
+
+
+Data retrieval is one aspect where {\projname} shines. It enables the analyst to write inlined, source specific database queries without the use of any third-party libraries. In order to do this, data analysts have to generate a configuration file, containing information required for establishing a successful connection with the respective database systems. Figure \ref{figure:source-config-file} shows an example of the configuration file that is used for connecting to a postgres database that contains the data that will by used in our analysis. The configuration file must contain the type of the database system, the host name, port and the credentials that will be used for obtaining a connection. Additionally, it contains the database tables that will be accessible by queries. Only the tables that are explicitly defined in the configuration file will be accessible in the notebook. After this configuration file is imported, (which is done directly from the notebook's UI), it will be hidden from the UI and encrypted so that this information is no longer visible to the notebook reader.  Furthermore, as an added benefit, the schema of the accessible tables will be displayed on the UI, this allows the notebook user to get a glimpse of that information when generating the queries. 
+
+
+
+Once this step is completed, the analyst is free to issue queries in order to access database systems. Specifically, she can use the notebook's UI in order to add a data-retrieval-cell and directly inline the query accessing any of they databases described in a configuration file. Figure \ref{figure:running-example:data-retrieval} contains a sample query that is used in our analysis. The query joins the two tables: $visitors$ and $page\_views$ on the id of the visitor, then groups the result on the $time$ attribute and runs a $count$ aggregate to count the visitors per unit of time. Lastly, it sorts the resulting dataset by time in ascending order. Figure \ref{figure:running-example:query-result} shows the result of the query. Notice that the result has been converted into a JSON array by \projname. In the next section we will show how to use this dataset to generate our first visualization, without the use of any imperative logic.
+
+\subsection{Source Wrappers}
+\label{subsection:source-wrappers}
+
+
+\projname\ contains a set of source wrappers that enables data retrieval from various different sources both relational and non-relational. These source wrappers come pre-installed with \projname\ so that the notebook user will not have to take on any system administrator duties. The user simply provides the configuration file and writes the query in the language supported by each database system. The source wrapper uses that information to connect to the respective database system, retrieve the requested data, convert it into JSON format and make it available to the user. For database systems that do not contain tables with schema, the notebook user has to provide the respective record container under the "expose" attribute of the configuration file (i.e if the user accesses a MongoDB database, she will have to declare a collections of documents instead of database tables). Additionally, in cases when the accessed database system does not have a schema the notebook will simply display a small portion of the dataset, thus assisting the notebook user to compose queries.
+
+\costas{Maybe put the last two sentences  in a side-note?}
+
+
+\subsection{\projname\ Visual Units}
+\label{section:visual Units}
+
+\noindent To shield analysts from the laborious task of constructing visualizations, \projname\ abstracts out each visual component as a \projname\ \emph{visual unit} (or simply \emph{unit}). In the eyes of the analyst a visual unit is simply a black box that takes as input a JSON value that describes the visualization, namely, unit instance. The visual unit internally uses the unit instance to invoke the appropriate renderer calls that will generate the expected visualization. As such a particular instantiation of the unit  can be described as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. 
+
+
+For instance, Figure \ref{figure:running-example:unit-body} shows a unit instance of type \texttt{highcharts}. The unit instance describes all the information that will be displayed in the visualization (such as the title of the chart, the labels on the x axis and so on). Each visual unit, comes with a unit instance schema that describes the format of the unit instance.
+
+
+%Based on this idea, \projname\ abstracts out the entire visual page in the form of a logical specification, referred to as a \emph{template instance}. The template instance contains a description of the visual units that should be displayed in the page together with their inputs. For instance, Figure \ref{???} shows the template instance of our running example. It consists of two unit instances, one of type HighCharts and one of type \ref{???}. Each unit instance is denoted as $\gl{<\% unit } U \gl{ \%> } v \gl{ <\% end unit \%>}$, where $U$ the type of the visual unit and $v$ the JSON value corresponding to the input of the unit. A special type of unit is an HTML unit for displaying HTML content. An HTML unit instance is of the form $\gl{<\% html \%> } e_1 \ldots e_n \gl{ <\% end html \%>}$, where $e_1, \ldots, e_n$ are HTML elements.
+
+\subsection{Template}
+\label{section:template}
+
+
+\eat{
+\begin{figure}[t]
+\centering
+\scriptsize
+\begin{tabular}{B}
+\hline
+ 1  & \gn{template}             & \gp   & \gl{<\% template} \gn{template\_name} (\gn{param\_list}) \gl{\%>}                    \\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{unit}
+\\
+    &                           &       & \gl{<\% end template \%>}                                         \\
+ 2  & \gn{param\_list}			& \gp   & ( \gn{var\_name} (, \gn{var\_name})* )? 
+\\ \hline
+ 3  & \gn{unit}         & \gp   & \gl{<\% unit} \gn{unit\_class} \gl{\%>}               \\
+    &                           &       & ~~ \gn{value}                                         \\
+    &                           &       & \gl{<\% end unit \%>}                                 \\
+ 4  & \gn{value}                & \gp   & \gn{jsonpp\_value} %\text{(see Figure~\ref{figure:bnf-value})} 
+\\
+ 5  &                           & \gd   & \gn{unit}                                     
+\\
+ 6  &                           & \gd   & \gn{print}                                                        \\
+ 7  &                           & \gd   & \gl{[} \gn{for} \gl{]}                                                                                \\
+ 8  &                           & \gd   & \gl{<} \gn{for} \gl{>}                                                                                \\
+ 9  &                           & \gd   & \gn{if}                                                                                 \\
+  
+ 10  &                           & \gd   & \gn{bind}                                                         \\
+11  &                           & \gd   & \gl{\{} \gn{event}*                                               \\
+    &                           &       & ~~ (\gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value}                                              \\
+    &                           &       & ~~ (\gl{,} \gl{\textquotedbl}\gn{string}\gl{\textquotedbl} 
+                                             \gl{:} \gn{value})* )? \gl{\}}                                           \\ \hline
+12  & \gn{let}                 & \gp   & \gl{<\% let} \gn{var\_name} \gl{=} \gn{expr} \gl{\%>}            
+\\
+13  & \gn{print}                & \gp   & \gl{<\% print} \gn{expr} \gl{\%>}                                 \\
+14  & \gn{for}                  & \gp   & \gl{<\% for} \gn{var\_name} \gl{in} \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{let}*                                    \\
+    &                           &       & ~~ \gn{value}
+\\
+    &                           &       & \gl{<\% end for \%>}                                              \\
+    
+14  & \gn{if}                  & \gp   & \gl{<\% if}  \gn{expr} \gl{\%>}           
+\\
+    &                           &       & ~~ \gn{value}
+\\
+ &                           &       & ~~ (\gl{<\% elif}  \gn{expr} \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})*    
+ \\
+ &                           &       & ~~ (\gl{<\% else}  \gl{\%>} 
+ 
+\\
+ &                           &       & ~~ \gn{value})?    
+\\
+    &                           &       & \gl{<\% end if \%>}                                              \\
+15  & \gn{bind}                 & \gp   & \gl{<\% bind} \gn{var\_name} = \gn{expr} \gl{\%>}                             \\
+16  & \gn{event}                & \gp   & \gl{<\% event} \gn{event\_name} \gn{action\_name} \gl{\%>}        \\
+17  & \gn{expr}                 & \gp   & \gn{js\_expression}                                               \\
+18  &                           & \gd   & \gn{source\_expression}                                                   \\
+19  &                           & \gd   & \gn{json\_path}                                                   \\
+\hline
+\end{tabular}
+\caption{BNF Grammar for Templates}
+\label{figure:bnf-template}
+\end{figure}
+}
+
+
+\emph{Templates} are declarative specifications that can be used to generate \projname\ variables or unit instances. The template language supports a set of \emph{template directives}, all of which operate on the JSON datamodel. These directives are used to describe computation, define variables and set up data collection. Due to lack of space we do not include a figure containing a formal BNF grammar for the template language, instead we simply describe each of them in detail and provide a concrete example that illustrates their use. 
+
+
+
+
+\noindent {\bf Defining variables.} A template may define variables that are added to the notebook's environment so that they can be used in subsequent computation. The $\gl{<\% let } x \gl{ = } E \gl{ \%>}$ directive defines variable $x$ and assigns to it the result of the expression $E$. $E$ can denote three types of expressions: path navigation on JSON data, invocation of a python function that performs computation by using as input and output JSON values or a source-specific language (such as a SQL query). For instance, the template shown in Figure \ref{figure:first-running-example:data-retrieval} employs a \gl{let} directive to create a variable \texttt{readings} containing the visitor information that will be displayed in the chart (retrieved from a relational DBMS through an SQL query).
+
+\noindent {\bf Reporting data.} Value assignments and iterations over collections are specified by using the \gl{print} and \gl{for} directives. The $\gl{<\% print } E \gl{ \%>}$ directive evaluates the expression $E$ and returns the result, while the $\gl{<\% for } x \gl{ in } E \gl{ \%> } B \gl{ <\% end for \%>}$ directive describes that variable $x$ iterates over the result of $E$ and, in each iteration, it instanciates the body $B$ of the \gl{for} loop. In Figure \ref{figure:first-running-example:main-template}, in lines 6-8 and 13-17 a \gl{for} directive is used to iterate over the readings retrieved from the database and for each reading, generate a new JSON value, with the use of the \gl{print} directive. Particularly, in line 7 the template generates a string (the time label), which is added to the labels array, that contains the labels that will appear on the x axis of the chart. In lines 14-16 it generates a JSON object of the form \{y: ...\} and adds it to the data array. The data array in highcharts contains the points that will appear in the chart.
+
+\noindent {\bf Collecting data.} In addition to specifying how to compute a template instance, the template's \gl{bind} directive allows the analyst to specify user input collection. Specifically, the $\gl{<\% bind x} \gl{ \%>}$ directive describes a two-way bind that will be created between the part of the unit instance appearing on its left side and to variable $x$. Once the reader interacts with the generated visualization and causes mutations to the underlying unit instance, these mutations will be propagated to the respective bound variables. For instance, in Figure \ref{figure:first-running-example:main-template} in lines 9-10 we create a two-way binding between the min and max boundaries of the chart and the min and max values of the time labels that have been retrieved (namely min\_time and max\_time). While the user interacts with chart he can select a particular region in the chart which in turn updates the values $min\_time$ and $max\_time$. This event invokes an internal propagation algorithm (which will be described in the next section) which triggers the revaluation of the \projname\ statements that use the values $min\_time$ and $max\_time$ in other parts of the notebook.
+
+
+

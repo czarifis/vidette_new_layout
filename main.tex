@@ -1,0 +1,245 @@
+%\documentclass{sig-alternate}
+\documentclass[numbers]{sigplanconf}
+%\documentclass[sigconf]{acmart} 
+\input{preamble}
+
+% Use either package to make commentary public or private. If commentary is
+% private, they will also be stripped by arxiv-sanitize.sh.
+%\usepackage{commentary-public}
+\usepackage{commentary-arxiv-private}
+\usepackage{tabularx}
+\usepackage{sectsty}
+\usepackage{titlecaps}
+\usepackage{caption,subcaption}																																		
+% Prodromou: Use for comments during collaboration. Turn off by uncommenting "remarkfalse"
+\input{remark}
+\remarktrue
+%\remarkfalse																																														
+\usepackage{hhline}
+%\usepackage{amsmath}
+\usepackage{times}
+% \usepackage{commentary-arxiv-private}https://preview.overleaf.com/public/zckgmbcqqxpd/images/f848aee704bdc6b4fb1a2d1d3c4a093089841ee3.jpeg
+
+% ACM: Package to generate and customize Algorithm as per ACM style
+% The "noend" option disables the printing of the "end" keywords. Use "algomargin" to decrease the margins for all algorithms.
+\usepackage[ruled, linesnumbered]{algorithm2e}
+\renewcommand{\algorithmcfname}{ALGORITHM}
+\SetAlFnt{\small}
+\SetAlCapFnt{\small}
+\SetAlCapNameFnt{\small}
+\SetAlCapHSkip{0pt}
+\usepackage{paralist}
+\usepackage{fancyvrb}
+\usepackage{listings, multicol}
+
+% Use one of the packages below to produce a document version. If a version
+% ends with "-private", all other unnecessary text will be stripped by
+% arxiv-sanitize.sh.
+%\usepackage{version-conference}                % Conference version
+\usepackage{version-extended-arxiv-private}    % Extended version (with all other text stripped, so that the source can be uploaded to arXiv)
+%\usepackage{version-extended-draft}            % Extended + Draft version
+%\usepackage{version-all}                       % All text side-by-side with color highlighting
+
+%------------------------------------------------------------------------------- 
+% Macros
+%------------------------------------------------------------------------------- 
+
+\IncMargin{-\parindent}
+
+% Toggle between two versions: Basic vs Extended
+\def\UseOption{basic}
+% \def\UseOption{extended}
+\newcommand{\toggle}[2]{\opt{basic}{#1}\opt{extended}{#2}}
+
+% Column types
+\newcolumntype{B}{|@{~}r@{~}|l@{~}c@{~~~}l@{~}|}    % (B)NF
+
+% Code examples
+\DefineVerbatimEnvironment{code}{Verbatim}{commandchars=\\\{\},frame=single,numbers=left,fontsize=\scriptsize}
+
+% Template directives 
+\newcommand{\directive}[2]{%
+\ifx&#2&%
+\textbf{<\% #1 \%>}%
+\else%
+\textbf{<\% #1}{ #2 }\textbf{\%>}%
+\fi%
+}
+
+% Paths
+\newcommand{\pp}[1]{\ensuremath{\hat{#1}}}
+\newcommand{\contains}{\ensuremath{\supseteq}}
+
+% Diffs
+\newcommand{\diff}[3]{\ensuremath{\Delta^{#1}_{#2}(#3)}}
+\newcommand{\insertarray}[1]{\diff{\operatorname{insert}}{\operatorname{array}}{#1}}
+\newcommand{\insertbag}[1]{\diff{\operatorname{insert}}{\operatorname{bag}}{#1}}
+\newcommand{\inserttuple}[1]{\diff{\operatorname{insert}}{\operatorname{tuple}}{#1}}
+\newcommand{\append}[1]{\diff{\operatorname{append}}{\operatorname{array}}{#1}}
+\newcommand{\update}[1]{\diff{\operatorname{update}}{}{#1}}
+\newcommand{\delete}[1]{\diff{\operatorname{delete}}{}{#1}}
+%\newcommand{\construct}[1]{\diff{\operatorname{construct}}{}{#1}}
+%\newcommand{\destruct}[1]{\diff{\operatorname{destruct}}{}{#1}}
+\newcommand{\construct}[1]{\diff{\operatorname{construct}}{\operatorname{unit}}{#1}}
+\newcommand{\constructattach}[1]{\diff{\operatorname{construct\&attach}}{\operatorname{unit}}{#1}}
+\newcommand{\destruct}[1]{\diff{\operatorname{destruct}}{\operatorname{unit}}{#1}}
+\newcommand{\attach}[1]{\diff{\operatorname{attach}}{\operatorname{unit}}{#1}}
+\newcommand{\detach}[1]{\diff{\operatorname{detach}}{\operatorname{unit}}{#1}}
+\newcommand{\hpath}[1]{\ensuremath{\vec{#1}}}
+\newcommand{\inserthtml}[1]{\diff{\operatorname{insert}}{\operatorname{html}}{#1}}
+\newcommand{\appendhtml}[1]{\diff{\operatorname{append}}{\operatorname{html}}{#1}}
+\newcommand{\updatehtml}[1]{\diff{\operatorname{update}}{\operatorname{html}}{#1}}
+\newcommand{\deletehtml}[1]{\diff{\operatorname{delete}}{\operatorname{html}}{#1}}
+
+\newcommand{\id}[1]{\hat{#1}}
+\newcommand{\inst}[1]{I(#1)}
+\newcommand{\diffz}[2]{\triangle^{\operatorname{#1}}(#2)}
+\newcommand{\insertdiff}[1]{\diffz{insert}{#1}}
+\newcommand{\inserttuplediff}[1]{\diffz{insert\_tuple}{#1}}
+\newcommand{\insertarraydiff}[1]{\diffz{insert\_array}{#1}}
+\newcommand{\appenddiff}[1]{\diffz{append}{#1}}
+\newcommand{\attributediff}[1]{\diffz{attribute}{#1}}
+\newcommand{\updatediff}[1]{\diffz{update}{#1}}
+\newcommand{\deletediff}[1]{\diffz{delete}{#1}}
+
+\newcommand{\highlight}[1]{\noindent\textbf{#1:}}
+
+\def\env{\mathrm{\Gamma}}
+\def\ground{\operatorname{Ground}}
+\def\nav{\operatorname{Nav}}
+\def\iterate{\operatorname{Iter}}
+\def\outputarray{\operatorname{Out}^A}
+\def\outputvalue{\operatorname{Out}^V}
+\def\function{\operatorname{Func}}
+\def\applyplan{\operatorname{Plan}}
+
+% Definition environment
+\newtheorem{base}{Base}[section]
+\newtheorem{definition}[base]{Definition}
+\newtheorem{example}[base]{Example}
+
+% Tabular
+\definecolor{lightgrey}{RGB}{235,235,235}
+\definecolor{cream}{RGB}{255,255,204}
+\newcommand\Tstrut{\rule{0pt}{2.6ex}}       % "top" strut
+\newcommand\Bstrut{\rule[-0.9ex]{0pt}{0pt}} % "bottom" strut
+
+% ACM: Metadata Information
+% \acmVolume{9}
+% \acmNumber{4}
+% \acmArticle{39}
+% \acmYear{2010}
+% \acmMonth{3}
+
+% ACM: Copyright
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\setcopyright{usgov}
+%\setcopyright{usgovmixed}
+%\setcopyright{cagov}
+%\setcopyright{cagovmixed}
+
+% ACM: DOI
+% \doi{0000001.0000001}
+
+% ACM: ISSN
+% \issn{1234-56789}
+
+
+\begin{document}
+
+\sectionfont{\MakeUppercase}
+
+\newcommand{\projname}[0]{ViDeTTe}
+\newcommand{\angular}[0]{AngularJS}
+\newcommand{\react}[0]{React}
+
+\title{\projname\ Interactive Notebooks}
+
+\authorinfo{Konstantinos Zarifis}
+           {University of California, San Diego}
+           {zarifis@cs.ucsd.edu}
+           
+\authorinfo{Yannis Papakonstantinou}
+           {University of California, San Diego}
+           {yannis@cs.ucsd.edu}
+%\authorinfo{Yannis Papakonstantinou}           {University of California, San Diego}            {yannis@cs.ucsd.edu}           
+                      
+\maketitle
+
+
+
+% \yannis{Test reminder}
+ 
+% \ifconference{CONF}
+% \ifextended{EXT}
+% \ifdraft{DRAFT}
+
+% Be less strict about word spacing to avoid various \texttt words overflowing the margins
+\begin{sloppypar}
+
+%\input{abstract-AP}
+%\input{abstract}
+%\input{abstract2}
+\input{abstract3}
+
+%\input{introduction-AP}
+%\input{introduction-AP2}
+\input{introduction-AP3}
+\input{running-example}
+%\input{traditional-notebooks}
+%\input{traditional-notebooks2}
+\input{traditional-notebooks3}
+
+%\input{reactive-notebooks-ideal}
+\input{reactive-notebooks-ideal2}
+%\input{vidette-notebooks}
+%\input{vidette-notebooks2}
+\input{vidette-notebooks3}
+%\input{external-interface}
+
+
+%\input{introduction}
+%\input{arch}
+
+%\input{walkthrough}
+
+%\input{data_retrieval}
+
+
+%\input{data_curation}
+
+%\input{visualization}
+
+%\input{interactivity-interface}
+
+
+
+%\input{discussion}
+
+\input{related-work}
+
+\input{conclusion}
+
+%\input{introduction}
+%\input{programming-model}
+
+\end{sloppypar}
+
+
+\bibliographystyle{abbrv}
+{
+%\small
+\scriptsize 
+\bibliography{refs}
+}
+
+
+%\bibliographystyle{abbrvnat}
+%\softraggedright
+%\bibliographystyle{abbrv}
+
+%\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,147 @@
+\section{Introduction}
+\label{section:introduction}
+
+
+\eat{
+
+The database, HCI and systems communities have proposed tools that simplify common tasks of analytical processes. Such tools, however, either focus on only individual stages (such as data retrieval or visualization) of a much bigger analytical pipeline or they focus on particular use cases (for instance pattern matching, finding correlations and so on). Despite their remarkable success, data analysts often want the flexibility that comes from combining diverse tools and computation libraries in order to perform an analysis. This need often pushes code-literate data analysts to the tried-and-true interactive notebooks, such as Jupyter \cite{Jupyter}.
+}
+
+
+
+Jupyter notebooks \cite{Jupyter} allow the use of popular, highly expressive, imperative languages, such as Python, for describing tasks such as data retrieval, processing and visualization, all in one platform. Due to the popularity of the languages they support, there is a massive collection of third-party utility libraries that can be used to facilitate such tasks. Furthermore, the web environment of interactive notebooks enables collaboration between data analysts, since it allows them to develop and run code that processes data and generates visualizations directly on the browser. Lastly, after completing an analysis, data analysts can compose their findings into an interactive report-like page, that contains re-runnable code, visualizations and textual description of the analysis, which can also be shared with non-technical users. Figure \ref{figure:notebook-interface}, shows the interface of Jupyter notebooks. It comprises a sequence of blocks that are created ``on-demand" by the data analyst, each block can contain explanatory text or re-runnable coding snippets that once evaluated output the result (which could be a visualization or plain text) into the subsequent block. 
+%For those reasons, notebooks are extensively used in data science projects.
+\begin{figure}[t]
+	\centering
+	\includegraphics[width=0.7\columnwidth]{figures/notebook2.pdf}
+	\caption{Notebook interface}
+	%\vspace{-15pt}
+	\label{figure:notebook-interface}
+\end{figure}
+
+\eat{
+However, interactive notebooks are still suboptimal with regard to ease of use and productivity for data analysts. 
+Retrieving, processing and visualizing data requires technical expertise that often exceeds the skill-set of a typical data analyst. Specifically, such steps require data transfers and package installations on the notebook server, in order to be used in an analysis. Such tasks fit the job description of a system administrator rather than a data analyst. \costas{downplay the sysadmin aspects of it.} Additionally, even after the environment has been setup, the data analyst has to read long documentation files that explain how to programmatically interact with such tools and she often has to spend significant effort writing plumbing code in order combine their functionality.
+}
+
+
+\eat{
+However, interactive notebooks are still suboptimal with regard to ease of use and productivity for data analysts. Retrieving, processing and visualizing data involves reading lengthy documentation pages that describe each library's API and writing complex imperative plumbing code that combines their functionality. Both these steps, are not only very time consuming but also require technical expertise that exceeds the skill-set of a typical data analyst. 
+\costas{If I understand the new instructions this last paragraph should be removed, correct?}
+}
+
+\eat{
+Besides the aforementioned limitations that impact data analysts, notebooks also have limitations that impact the, potentially non-technical, readers of the published notebooks. Particularly, while notebooks can contain visualizations that showcase important aspects of a data analysis, the readers cannot interact with the provided visualizations in the same way they could if these visualizations were part of a typical OLAP dashboard application. Specifically, even if the analyst that composed the notebook used third-party web-based visualization libraries that support user interaction, this interaction can only cause local changes to the visualization \cite{Bokeh, plotly, ipyvega, Altair} the reader interacts with and cannot trigger additional data retrieval, computation or mutations to other visualizations that are included in the notebook. For this reason, only code-literate readers, capable of extending the notebook with more coding snippets, are able to further explore the underlying data (or examine additional hypotheses about the underlying data), while the rest are limited to passively reading the generated notebook.
+}
+
+
+Jupyter notebooks, however, have limitations that impact the exploratory capabilities that can be performed by the potentially non-technical, readers of the published notebooks. Particularly, while notebooks can contain visualizations that showcase important aspects of a data analysis, the readers cannot interact with them in the same way they could if these visualizations were part of a typical OLAP dashboard application. Specifically, even if the analyst that composes the notebook uses third-party web-based visualization libraries \cite{Bokeh, plotly, ipyvega, Altair} that support user interaction, the default side-effect of this interaction is to only cause local changes to the visualization the reader interacts with and, therefore, do not trigger additional data retrieval, computation or mutations to other visualizations that are included in the notebook (which could be generated by subsequent coding blocks). Adding more elaborate side-effects that can perform such tasks requires complex event-driven logic that is typically used by web developers (in MVC applications) which entails a more advanced skill-set that data analysts might lack. For this reason, only code-literate readers, capable of extending the notebook with more coding snippets, are able to further explore the underlying data (or examine additional hypotheses about that data), while the rest are limited to passively reading the generated notebook. 
+
+
+We are investigating two methods, that can be used for the creation of reactive notebooks. Both these methods describe side-effects implicitly using a view-over-data approach, without requiring additional event-driven logic. The first method, presented in this paper, is using FORWARD  \cite{SIGMOD2010,CIDR2011} and its DSL, with two differences: (a) Unlike FORWARD where the presentation layout is determined by markup \cite{forward_online}, \projname\ assumes that the FORWARD DSL script is a sequence of pairs consisting of computation (essentially, computing a view) and a visual unit that visualizes the view, (b) the second difference is the extension of FORWARD towards interfacing with Python code - in particular, with Python functions. The second approach is based on using existing Jupyter (Python) coding blocks, (which describe the initial visualizations) and inferring how the outcome of each statement would be affected given a mutation. In this paper we will describe the first approach as the DSL makes static analysis and change propagation, needed for efficiency, far easier.
+
+\eat{
+
+In order to add such OLAP-like functionality to notebooks, a data analyst has to explicitly implement event-driven logic for every UI event that might occur. This process however is not trivial, manually specifying elaborate side-effects for each event that might occur is an extremely arduous and error-prone task, especially, when multiple events cause mutations to the same visualizations of the notebook. This coding style is used by web developers (in MVC frameworks) when building fully-fledged applications, and it typically requires advanced skill-set that data analysts might lack. At the same time, such event-driven programming style is not typically used in Jupyter notebooks. Lastly, note that the provided logic executed after each event may need to mutate visualizations generated by subsequent coding blocks, this functionality however, is not supported by most third-party visualization libraries.
+
+}
+
+
+\costas{Does this point belong to both the reader and the data analyst of the notebook? Regardless of the technical expertise of the analyst, building a reactive dashboard just cannot be done in a notebook that contains multiple cells.}
+
+
+\costas{reviewer 1: Interactive visualizations are indeed supported in Jupyter via JS libraries -- e.g. Reactive Vega, Altair, Plotly, PivotTable, etc. You say it's not possible, and in the next paragraph you say it *is* possible BUT only with local changes.}
+
+\costas{Is there a problem with my writing here? We should make it clear that we meant that it doesn't work across visualizations/data access/computations described across multiple cells}
+
+\costas{reviewer 1: b. But that is incorrect also! ipywidgets allow reactivity, so that interactive visualizations can trigger data retrieval, computation and data mutation. If you pass (say) Python state into the widget, it can use that state to trigger Python calls to data backends.Now perhaps that hasn't been wrapped up neatly yet with a viz library into a DSL (I'm not sure), but it's definitely quite possible.}
+
+\costas{The problem is that the data obtained from the backend cannot be consumed by visualizations that exist in subsequent coding blocks. The interesting sequence that cannot be currently performed in notebooks is: Going from (1) user interaction within charts to (2 - optional) data access to (3 - optional) data processing to (4) (ideally incremental) reevaluation of subsequent charts/graphs. In ViDeTTe each of these steps could appear in separate notebook cells.
+One could implement what the reviewer suggests in a single cell (although not a lot of visualizations can be visible in the limited space where the output of a single cell appears) but that's not how analysts use notebooks, this is how a web developer would build an application that countains visualizations}
+
+
+\costas{Reviewer 2: The "reader`` in this case is acting the role of "interactor`` They are doing more than simply reading the notebook, but rather interacting with it. One wonders if there might be different goals for true notebook readers. }
+
+\costas{We should address this (perhaps we should add the "freeze" feature mentioned in my email?) 2/3 reviewers touched on this subject.}
+
+\noindent {\bf Contributions.}
+In order to offer the capability to describe reactive behavior without requiring explicit event-driven logic in notebooks, we extend Jupyter with the  {\projname} notebook engine. The main contributions of this extension are: (a) visual constructs, capable of collecting the reader's input as they interact with the produced visualizations, (b) A declarative template language that can be used to declaratively describe computation, data transformations and user input collection, (c) An algorithm, capable of propagating changes between co-dependent visual constructs and computations, which introduces a truly reactive behavior to notebooks. These reactive capabilities, enable non-technical readers to further explore the underlying data used in an analysis.
+
+\costas{I think it's fair to say that the first author was against the first contribution (because there are existing libraries that perform these individual tasks, which I also mentioned in the next sections). Should this be removed? I think we have a great way of combining the functionality provided by these modules in a declarative way which is superior to the way someone would interface these individual libraries (especially when dealing with event-drive reactivity) but this is expressed by the second contribution. What do you think?}
+
+\eat{
+\begin{compact_enum} 
+\item visual and data retrieval constructs, that simplify the process of data retrieval and visualization, for data analysts, 
+\item A declarative template language that can be used for describing computation, data transformations and user input collection, \eat{\yannis{shouldn't this item be bigger? It's not just input collection: doesn't it also define control flow?}}
+\item A propagation algorithm, that utilizes visual and data retrieval constructs, combined with templates in order to introduce a reactive behavior to notebooks. These reactive capabilities, enable non-technical readers to further explore data, without requiring any coding skills. 
+\end{compact_enum}
+}
+\eat{
+The remainder of this paper is organized as follows: Section ?? discusses the architecture of the {\projname} framework. Due to space limitation, we focus on those aspects that can be useful as a notebook extension. Section ?? presents our example data analysis. Finally, Section ?? concludes the paper.
+}
+
+\eat{
+\noindent {\bf Contributions.}
+To sum up, we extend interactive notebooks with the  {\projname} notebook engine. The main contributions of this extension are: (a) visual and data retrieval constructs, that simplify the process of data retrieval and visualization, (b) A declarative template language that can be used for specifying computation, data transformations and user input collection, (c) A propagation algorithm, that utilizes visual and data retrieval constructs, in association with a template language in order to introduce a reactive in notebooks. 
+}
+\eat{
+
+\begin{itemize}
+	\item \textit{Expressive template language:} Prior work, treats a page as a database view. Building on that, our template language goes beyond SQL query and view definition in both style and fundamental expressiveness. It is a mixture of query as well as web templating language that works on ordered (arrays) and semi-ordered (JSON) data. 
+	\item \textit{Easy data retrieval:} Our framework supports communication with all major database types, such as Postgress, MongoDB, SQL etc, eliminating the need for individual DB drivers. Furthermore, using {\projname}, user access credentials for the database server(s) are stored in a configuration file, eliminating the embarassingly insecure practice of typing usernames and passwords in notebook cells vidible to everyone.
+	\item \textit{Inline JSON operations:} The primary data structure used in {\projname} is JSON arrays. {\projname} combines the intuitive nature of JSON with the ability to write inline JSON operations, resulting in a clean, structured and readable code.
+	\item \textit{Variable binding:} Analysts can easily ``bind'' variables using our template language. ``Binding'', results in automatic re-execution of notebook cells that contain those variables upon a change. {\projname} will trigger execution of the appropriate cells without any extra coding effort. As we show later, combined with inline JSON operations, binding becomes an incredibly versatile tool.
+
+%	\item \textit{Declarative semantics:} {\projname} implements formal declarative \textit{Model-View-View-Model} (MVVM) semantics. \remark{Fill in why this is a good thing. I have no idea.}
+%	\item \textit{Expressive template language:} Prior database work, treats a page as a database view. Building on that, our template language goes beyond SQL query and view definition in both style and fundamental expressiveness. It is a mixture of query as well as web templating language that works on ordered (arrays) and semi-ordered (JSON) data. 
+%	\item We allow in-line declarative code directly in JSON...
+\end{itemize}
+
+}
+
+
+\eat{
+\begin{figure*}
+	\includegraphics[width=\textwidth]{figures/highchart_final_a.pdf}
+	\caption{Demonstration of interactive charts. The analyst's selection automatically updates the second plot (right).}
+	\label{fig:vision}
+\end{figure*}
+}
+\eat{
+\begin{figure*}
+	\includegraphics[width=\textwidth]{figures/highchart_final_b.pdf}
+	\caption{Demonstration of interactive charts. The analyst's selection automatically updates the second plot (right).}
+	\label{fig:vision}
+\end{figure*}
+}
+\eat{
+\remark{Ok I thought about it and I propose the following modifications in the paper structure (Nothing major - just moving text around to make it more readable): We begin with a good discussion about the vidette features that can help notebooks in section 2. We then show the entire walkthrough in one section (Section 3). By now, the reader knows what vidette can do so it will be easier to follow and understand the code we show.}
+}
+ \eat{
+We address these issues, by extending interactive notebooks with the  {\projname} framework. {\projname} notebooks support a new template language capable of facilitating common data analysis tasks. The main contributions of this extension are:
+
+\begin{itemize}
+	\item \textit{Expressive template language:} Prior work, treats a page as a database view. Building on that, our template language goes beyond SQL query and view definition in both style and fundamental expressiveness. It is a mixture of query as well as web templating language that works on ordered (arrays) and semi-ordered (JSON) data. 
+	\item \textit{Easy data retrieval:} Our framework supports communication with all major database types, such as Postgress, MongoDB, SQL etc, eliminating the need for individual DB drivers. Furthermore, using {\projname}, user access credentials for the database server(s) are stored in a configuration file, eliminating the embarassingly insecure practice of typing usernames and passwords in notebook cells vidible to everyone.
+	\item \textit{Inline JSON operations:} The primary data structure used in {\projname} is JSON arrays. {\projname} combines the intuitive nature of JSON with the ability to write inline JSON operations, resulting in a clean, structured and readable code.
+	\item \textit{Variable binding:} Analysts can easily ``bind'' variables using our template language. ``Binding'', results in automatic re-execution of notebook cells that contain those variables upon a change. {\projname} will trigger execution of the appropriate cells without any extra coding effort. As we show later, combined with inline JSON operations, binding becomes an incredibly versatile tool.
+
+%	\item \textit{Declarative semantics:} {\projname} implements formal declarative \textit{Model-View-View-Model} (MVVM) semantics. \remark{Fill in why this is a good thing. I have no idea.}
+%	\item \textit{Expressive template language:} Prior database work, treats a page as a database view. Building on that, our template language goes beyond SQL query and view definition in both style and fundamental expressiveness. It is a mixture of query as well as web templating language that works on ordered (arrays) and semi-ordered (JSON) data. 
+%	\item We allow in-line declarative code directly in JSON...
+\end{itemize}
+}
+
+
+%In this paper, we demonstrate the use of {\projname} via a walkthrough example. Specifically, we want to use website access data to plot an access count over time histogram. We also want to plot the recorded user demographics (with focus on age groups). We then want to have the ability to interact with the histogram plot and select a time region. This action should automatically update the second plot with the user demographics in the selected time window. 
+%
+%Without loss of generality, we assume a Jupyter server, where the analysts develop their notebooks and a different database server where data is stored. To retrieve the entirety of the required data, we have to query two different databases and join the returned JSON files. Figure ?? shows how our databases are organized. Our fictional analyst will perform the following high-level tasks:
+%
+%\begin{itemize}
+%	\item Data retrieval from remote databases. 
+%	\item Data curation: Join data and prepare for visualization.
+%	\item Data visualization.
+%\end{itemize}
+%
+%The remainder of this paper is organized as follows: Sections \ref{section:dataretrieval} -- \ref{section:visualization} present a direct comparison of using {\projname} and an imperative language such as Python in order to complete the tasks of our example. Throughout these sections, we demonstrate some of the main contributions of {\projname}. Section \ref{section:discussion} provides further discussion regarding our proposed extension and presents other useful aspects of it not used in our walkthrough. Finally, Section \ref{section:conclusion} concludes the paper.
+
